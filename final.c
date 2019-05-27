@@ -22,7 +22,7 @@
 #define DEBUG 0 /* Activate/deactivate debug mode */
 #endif
 
-#if DEBUG==0
+#if DEBUG==1
 #define NDEBUG
 #endif
 /* #include <assert.h> */ /* Verify assumptions with assert. Turn off with #define NDEBUG */ 
@@ -44,7 +44,7 @@
 typedef struct s_header
 {
     int magic; /* magic number 2051 */
-    int ni; /* test = 10000 */
+    int ni; /* test = 6000 */
     int lin; /* rows = 28 */
     int col; /* columns = 28 */
 } header_t;
@@ -81,6 +81,7 @@ typedef struct skohonen
 
 void help(void); /* print some help */
 void copyr(void); /* print version and copyright information */
+
 double activation(double v); /* funcao de ativacao */
 double d_activation(double v); /* derivada da funcao de ativacao */
 
@@ -89,7 +90,7 @@ double d_activation(double v); /* derivada da funcao de ativacao */
 /* 
 [offset] [type]          [value]          [description] 
 0000     32 bit integer  0x00000803(2051) magic number 
-0004     32 bit integer  10000            number of images 
+0004     32 bit integer  6000             number of images 
 0008     32 bit integer  28               number of rows 
 0012     32 bit integer  28               number of columns 
 0016     unsigned byte   ??               pixel 
@@ -109,14 +110,16 @@ int main(void)
     config_t c;
     kohonen_t koh;
     FILE *fp;
-    double v,
-           erro[NODES3],
+    double erro[NODES3],
            saidaideal[NODES3], /* vetor resultado ideal ou label do numero lido */
-           bias = 1;
+           bias;
     int indice;
     int i, j, k, n;
 
     /* codigo */
+    c.eta = 0.1;
+    bias = 1;
+
     srand(time(NULL));
 
     if((fp=fopen(NOMEARQ, "rb"))==NULL)
@@ -167,6 +170,7 @@ int main(void)
     {
         /* . . . . . . . . . . . . . . */
         /* FORWARD COMPUTATION */
+
         /* primeiro layer */
         for(j = 0; j < NODES1; j++)
         {
@@ -224,6 +228,9 @@ int main(void)
         /* BACKWARD COMPUTATION */
         /* ... */
     }
+
+    /* fechar arquivos */
+    fclose(fp);
 
     return EXIT_SUCCESS;
 }
