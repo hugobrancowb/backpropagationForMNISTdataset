@@ -53,6 +53,10 @@ typedef struct sconfig
 {
     double eta; /* eta: learning rate */
     int counter; /* interation counter */
+
+    double v1[NODES1];
+    double v2[NODES2];
+    double v3[NODES3];
     
     double wmap1[NODES1][784]; /* first neuron layer - hidden */
     double wmap2[NODES2][NODES1]; /* second neuron layer - hidden */
