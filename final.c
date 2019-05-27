@@ -168,8 +168,31 @@ int main(void)
             c.v1[j] = activation(c.v1[j]);
         }
 
+        /* segundo layer */
+        for(j = 0; j < NODES2; j++)
+        {
+            c.v2[j] = bias;
+            for(k = 0; k < NODES1; k++)
+            {
+                c.v2[j] += c.wmap2[j][k] * c.v1[k];
+            }
+            c.v2[j] = activation(c.v2[j]);
+        }
+
+        /* terceiro layer */
+        for(j = 0; j < NODES3; j++)
+        {
+            c.v3[j] = bias;
+            for(k = 0; k < NODES2; k++)
+            {
+                c.v3[j] += c.wmap3[j][k] * c.v2[k];
+            }
+            c.v3[j] = activation(c.v3[j]);
+        }
+
         /* . . . . . . . . . . . . . . */
         /* BACKWARD COMPUTATION */
+        /* ... */
     }
 
     return EXIT_SUCCESS;
