@@ -30,6 +30,7 @@
 
 # Executables
 *.exe
+*.x
 *.out
 *.app
 *.i*86
@@ -50,3 +51,9 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+# Outros
+ex8.c
+label8.c
+makefile
+.vscode
