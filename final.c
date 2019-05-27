@@ -137,20 +137,26 @@ int main(void)
     printf("Num. colunas por imagem: %d\n", h.col);
     printf("Lendo imagens %d x %d\n", h.lin, h.col);
 
-    unsigned char imgCHAR[h.ni][(h.lin*h.col)+1]; /* linha: imagens // coluna: 784 pixels + 1 label */
-    double img[h.ni][(h.lin*h.col)+1];
+    /* unsigned char img[h.ni][(h.lin*h.col)+1]; */
+    unsigned char *img;
+    img = (unsigned char *)malloc(sizeof(unsigned char)*((h.lin*h.col)+1)*h.ni);
     /* para vetores maiores, usar malloc e alocacao dinamica */
     /* unsigned char *img; */ /* ponteiro para matriz de dados */
     /* img = (unsigned char *)malloc(sizeof(unsigned char)*h.lin*h.col*h.ni); */
 
     i=0;
-    while((n=fread(&imgCHAR[i], sizeof(kohonen_t), 1, fp)) == 1)
+    while((n=fread(&img[i], sizeof(kohonen_t), 1, fp)) == 1)
         i++;
     
-    /* normalizacao dos valores de entrada*/
+    double *imgVec;
+    imgVec = (double *)malloc(sizeof(double)*((h.lin*h.col)+1)*h.ni);
+    
+    /* double imgVec[h.ni][(h.lin*h.col)+1] */
+
+    /* normalizacao dos valores de entrada */
     for(i = 0; i < h.ni; i++)
         for(j = 0; j < 784; j++)
-            img[i][j] = imgCHAR[i][j]/255;
+            imgVec[(784+1)*i + j] = img[(784+1)*i + j]/255.0;
     
     /* inicializacao dos mapas de pesos */
     for(i = 0; i < NODES1; i++)
@@ -177,7 +183,7 @@ int main(void)
             c.v1[j] = bias;
             for(k = 0; k < 784; k++)
             {
-                c.v1[j] += c.wmap1[j][k] * img[i][k];
+                c.v1[j] += c.wmap1[j][k] * imgVec[785*i + k];
             }
             c.y1[j] = activation(c.v1[j]);
         }
