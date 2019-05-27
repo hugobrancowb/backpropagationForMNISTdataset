@@ -57,6 +57,14 @@ typedef struct sconfig
     double v1[NODES1];
     double v2[NODES2];
     double v3[NODES3];
+
+    double y1[NODES1];
+    double y2[NODES2];
+    double y3[NODES3];
+
+    double delta1[NODES1];
+    double delta2[NODES2];
+    double delta3[NODES3];
     
     double wmap1[NODES1][784]; /* first neuron layer - hidden */
     double wmap2[NODES2][NODES1]; /* second neuron layer - hidden */
@@ -167,7 +175,7 @@ int main(void)
             {
                 c.v1[j] += c.wmap1[j][k] * img[i][k];
             }
-            c.v1[j] = activation(c.v1[j]);
+            c.y1[j] = activation(c.v1[j]);
         }
 
         /* segundo layer */
@@ -176,9 +184,9 @@ int main(void)
             c.v2[j] = bias;
             for(k = 0; k < NODES1; k++)
             {
-                c.v2[j] += c.wmap2[j][k] * c.v1[k];
+                c.v2[j] += c.wmap2[j][k] * c.y1[k];
             }
-            c.v2[j] = activation(c.v2[j]);
+            c.y2[j] = activation(c.v2[j]);
         }
 
         /* terceiro layer */
@@ -187,18 +195,30 @@ int main(void)
             c.v3[j] = bias;
             for(k = 0; k < NODES2; k++)
             {
-                c.v3[j] += c.wmap3[j][k] * c.v2[k];
+                c.v3[j] += c.wmap3[j][k] * c.y2[k];
             }
-            c.v3[j] = activation(c.v3[j]); /* a saida v3 eh o vetor resultado que nos diz o numero que a rede supoe que seja */
+            c.y3[j] = activation(c.v3[j]); /* a saida v3 eh o vetor resultado que nos diz o numero que a rede supoe que seja */
 
             saidaideal[j] = 0;
             erro[j] = 0;
         }
 
+        /* . . . . . . . . . . . . . . */
+        /* BACKWARD COMPUTATION */
+
         /* calculo do erro */
-        saidaideal[(int)img[i][784]] = 1;
+        saidaideal[(int)imgVec[i*785 + 784]] = 1;
         for(j = 0; j < NODES3; j++)
-            erro[j] = saidaideal[j] - c.v3[j];
+            erro[j] = saidaideal[j] - c.y3[j];
+        
+        /* terceiro layer */
+        for(j = 0; j < NODES3; j++)
+        {
+            c.delta3[j] = erro[j] * d_activation(c.v3[j]);
+            for(k = 0; k < NODES2; k++)
+                c.wmap3[j][k] += c.eta * c.delta3[j] * c.y2[k];
+        }
+
 
         /* . . . . . . . . . . . . . . */
         /* BACKWARD COMPUTATION */
