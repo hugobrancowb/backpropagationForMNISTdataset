@@ -53,18 +53,6 @@ typedef struct sconfig
 {
     double eta; /* eta: learning rate */
     int counter; /* interation counter */
-
-    double v1[NODES1];
-    double v2[NODES2];
-    double v3[NODES3];
-
-    double y1[NODES1];
-    double y2[NODES2];
-    double y3[NODES3];
-
-    double delta1[NODES1];
-    double delta2[NODES2];
-    double delta3[NODES3];
     
     double wmap1[NODES1][784]; /* first neuron layer - hidden */
     double wmap2[NODES2][NODES1]; /* second neuron layer - hidden */
@@ -107,7 +95,8 @@ int main(void)
 {
     /* declaracoes de variaveis locais */
     header_t h;
-    config_t c;
+    /* config_t c; */
+    struct sconfig *c = (struct sconfig*)malloc(sizeof(struct sconfig));
     kohonen_t koh;
     FILE *fp;
     double erro[NODES3],
@@ -117,7 +106,7 @@ int main(void)
     int i, j, k, n;
 
     /* codigo */
-    c.eta = 0.1;
+    c -> eta = 0.1;
     bias = 1;
 
     srand(time(NULL));
@@ -136,40 +125,65 @@ int main(void)
     printf("Num. linhas por imagem: %d\n", h.lin);
     printf("Num. colunas por imagem: %d\n", h.col);
     printf("Lendo imagens %d x %d\n", h.lin, h.col);
-
-    /* unsigned char img[h.ni][(h.lin*h.col)+1]; */
+    
     unsigned char *img;
     img = (unsigned char *)malloc(sizeof(unsigned char)*((h.lin*h.col)+1)*h.ni);
-    /* para vetores maiores, usar malloc e alocacao dinamica */
-    /* unsigned char *img; */ /* ponteiro para matriz de dados */
-    /* img = (unsigned char *)malloc(sizeof(unsigned char)*h.lin*h.col*h.ni); */
 
     i=0;
-    while((n=fread(&img[i], sizeof(kohonen_t), 1, fp)) == 1)
+    while((n=fread(&img[i], h.ni*sizeof(kohonen_t), 1, fp)) == 1)
         i++;
     
     double *imgVec;
     imgVec = (double *)malloc(sizeof(double)*((h.lin*h.col)+1)*h.ni);
-    
-    /* double imgVec[h.ni][(h.lin*h.col)+1] */
 
     /* normalizacao dos valores de entrada */
     for(i = 0; i < h.ni; i++)
-        for(j = 0; j < 784; j++)
-            imgVec[(784+1)*i + j] = img[(784+1)*i + j]/255.0;
-    
+        for(j = 0; j <= 784; j++)
+        {
+            if(j == 784)
+            {
+                imgVec[i*785 + j] = img[i*785 + j]*1.0;
+                printf("%3.2lf\n", imgVec[i*785 + j]);
+            }
+            else
+                imgVec[i*785 + j] = img[i*785 + j]/255.0;
+        }
+
+    if(DEBUG)
+        return 0;
+
+    /* variaveis */
+    double *v1;
+    double *v2;
+    double *v3;
+    double *y1;
+    double *y2;
+    double *y3;
+    double *delta1;
+    double *delta2;
+    double *delta3;
+    v1 = (double *)malloc(NODES1*sizeof(double));
+    v2 = (double *)malloc(NODES2*sizeof(double));
+    v3 = (double *)malloc(NODES3*sizeof(double));
+    y1 = (double *)malloc(NODES1*sizeof(double));
+    y2 = (double *)malloc(NODES2*sizeof(double));
+    y3 = (double *)malloc(NODES3*sizeof(double));
+    delta1 = (double *)malloc(NODES1*sizeof(double));
+    delta2 = (double *)malloc(NODES2*sizeof(double));
+    delta3 = (double *)malloc(NODES3*sizeof(double));
+
     /* inicializacao dos mapas de pesos */
     for(i = 0; i < NODES1; i++)
         for(j = 0; j < h.lin*h.col; j++)
-            c.wmap1[i][j] = (rand()%100)/100000.0;
+            c -> wmap1[i][j] = (rand()%100)/100000.0;
 
     for(i = 0; i < NODES2; i++)
         for(j = 0; j < NODES1; j++)
-            c.wmap2[i][j] = (rand()%100)/100000.0;
+            c -> wmap2[i][j] = (rand()%100)/100000.0;
 
     for(i = 0; i < NODES3; i++)
         for(j = 0; j < NODES2; j++)
-            c.wmap3[i][j] = (rand()%100)/100000.0;
+            c -> wmap3[i][j] = (rand()%100)/100000.0;
 
     /* 'i': imagem atual -- numero total de imagens para treinar a rede */
     for(i = 0; i < h.ni; i++)
@@ -180,34 +194,34 @@ int main(void)
         /* primeiro layer */
         for(j = 0; j < NODES1; j++)
         {
-            c.v1[j] = bias;
+            v1[j] = bias;
             for(k = 0; k < 784; k++)
             {
-                c.v1[j] += c.wmap1[j][k] * imgVec[785*i + k];
+                //v1[j] += c -> wmap1[j][k] * imgVec[i][k];
             }
-            c.y1[j] = activation(c.v1[j]);
+            y1[j] = activation(v1[j]);
         }
 
         /* segundo layer */
         for(j = 0; j < NODES2; j++)
         {
-            c.v2[j] = bias;
+            v2[j] = bias;
             for(k = 0; k < NODES1; k++)
             {
-                c.v2[j] += c.wmap2[j][k] * c.y1[k];
+                v2[j] += c -> wmap2[j][k] * y1[k];
             }
-            c.y2[j] = activation(c.v2[j]);
+            y2[j] = activation(v2[j]);
         }
 
         /* terceiro layer */
         for(j = 0; j < NODES3; j++)
         {
-            c.v3[j] = bias;
+            v3[j] = bias;
             for(k = 0; k < NODES2; k++)
             {
-                c.v3[j] += c.wmap3[j][k] * c.y2[k];
+                v3[j] += c -> wmap3[j][k] * y2[k];
             }
-            c.y3[j] = activation(c.v3[j]); /* a saida v3 eh o vetor resultado que nos diz o numero que a rede supoe que seja */
+            y3[j] = activation(v3[j]); /* a saida v3 eh o vetor resultado que nos diz o numero que a rede supoe que seja */
 
             saidaideal[j] = 0;
             erro[j] = 0;
@@ -217,24 +231,47 @@ int main(void)
         /* BACKWARD COMPUTATION */
 
         /* calculo do erro */
-        saidaideal[(int)imgVec[i*785 + 784]] = 1;
+        //saidaideal[(int)imgVec[i][784]] = 1;
         for(j = 0; j < NODES3; j++)
-            erro[j] = saidaideal[j] - c.y3[j];
+            erro[j] = saidaideal[j] - y3[j];
         
         /* terceiro layer */
         for(j = 0; j < NODES3; j++)
         {
-            c.delta3[j] = erro[j] * d_activation(c.v3[j]);
-            for(k = 0; k < NODES2; k++)
-                c.wmap3[j][k] += c.eta * c.delta3[j] * c.y2[k];
+            delta3[j] = erro[j] * d_activation(v3[j]);
+            //for(k = 0; k < NODES2; k++)
+                //c -> wmap3[j][k] += eta * delta3[j] * y2[k];
         }
 
+        /* segundo layer */
+        for(j = 0; j < NODES2; j++)
+        {
+            delta2[j] = 0;
+            for(k = 0; k < NODES3; k++)
+                delta2[j] += delta3[k] * c -> wmap3[k][j];
+            
+            delta2[j] = delta2[j] * d_activation(v2[j]);
 
-        /* . . . . . . . . . . . . . . */
-        /* BACKWARD COMPUTATION */
-        /* ... */
+            //for(k = 0; k < NODES1; k++)
+                //c -> wmap2[j][k] += eta * delta2[j] * y1[k];
+        }
+
+        /* primeiro layer */
+        for(j = 0; j < NODES1; j++)
+        {
+            delta1[j] = 0;
+            for(k = 0; k < NODES2; k++)
+                delta1[j] += delta2[k] * c -> wmap2[k][j];
+            
+            delta1[j] = delta1[j] * d_activation(v1[j]);
+
+            //for(k = 0; k < 784; k++)
+                //c -> wmap1[j][k] += eta * delta1[j] * imgVec[i][k];
+        }
     }
 
+    free(img);
+    free(imgVec);
     /* fechar arquivos */
     fclose(fp);
 
