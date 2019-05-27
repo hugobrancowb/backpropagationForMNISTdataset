@@ -152,6 +152,26 @@ int main(void)
         for(j = 0; j < NODES2; j++)
             c.wmap3[i][j] = (rand()%100)/100000.0;
 
+    /* 'i': imagem atual -- numero total de imagens para treinar a rede */
+    for(i = 0; i < h.ni; i++)
+    {
+        /* . . . . . . . . . . . . . . */
+        /* FORWARD COMPUTATION */
+        /* primeiro layer */
+        for(j = 0; j < NODES1; j++)
+        {
+            c.v1[j] = bias;
+            for(k = 0; k < 784; k++)
+            {
+                c.v1[j] += c.wmap1[j][k] * img[i][k];
+            }
+            c.v1[j] = activation(c.v1[j]);
+        }
+
+        /* . . . . . . . . . . . . . . */
+        /* BACKWARD COMPUTATION */
+    }
+
     return EXIT_SUCCESS;
 }
 
