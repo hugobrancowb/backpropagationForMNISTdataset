@@ -73,6 +73,8 @@ typedef struct skohonen
 
 void help(void); /* print some help */
 void copyr(void); /* print version and copyright information */
+double activation(double v); /* funcao de ativacao */
+double d_activation(double v); /* derivada da funcao de ativacao */
 
 /* ---------------------------------------------------------------------- */
 /* types */
@@ -99,8 +101,10 @@ int main(void)
     config_t c;
     kohonen_t koh;
     FILE *fp;
+    double v,
+           bias = 1;
     int indice;
-    int i, j, n;
+    int i, j, k, n;
 
     /* codigo */
     srand(time(NULL));
@@ -149,6 +153,21 @@ int main(void)
             c.wmap3[i][j] = (rand()%100)/100000.0;
 
     return EXIT_SUCCESS;
+}
+
+/* funcao de ativacao */
+double activation(double v)
+{
+    double y = 1/(1+exp(-v));
+    return y;
+}
+
+/* derivada da funcao de ativacao */
+double d_activation(double v)
+{
+    double av = activation(v);
+    double dy = av * (1 - av);
+    return dy;
 }
 
 
