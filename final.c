@@ -116,17 +116,20 @@ int main(void)
     printf("Num. colunas por imagem: %d\n", h.col);
     printf("Lendo imagens %d x %d\n", h.lin, h.col);
 
-    unsigned char img[h.ni][(h.lin*h.col)+1]; /* linha: imagens // coluna: 784 pixels + 1 label */
+    unsigned char imgCHAR[h.ni][(h.lin*h.col)+1]; /* linha: imagens // coluna: 784 pixels + 1 label */
+    double img[h.ni][(h.lin*h.col)+1];
     /* para vetores maiores, usar malloc e alocacao dinamica */
     /* unsigned char *img; */ /* ponteiro para matriz de dados */
     /* img = (unsigned char *)malloc(sizeof(unsigned char)*h.lin*h.col*h.ni); */
 
     i=0;
-    while((n=fread(&img[i], sizeof(kohonen_t), 1, fp)) == 1)
+    while((n=fread(&imgCHAR[i], sizeof(kohonen_t), 1, fp)) == 1)
         i++;
     
     /* normalizacao dos valores de entrada*/
-    /* ... */
+    for(i = 0; i < h.ni; i++)
+        for(j = 0; j < 784; j++)
+            img[i][j] = imgCHAR[i][j]/255;
     
     /* inicializacao dos mapas de pesos */
     for(i = 0; i < NODES1; i++)
