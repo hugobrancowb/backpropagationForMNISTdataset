@@ -102,6 +102,8 @@ int main(void)
     kohonen_t koh;
     FILE *fp;
     double v,
+           erro[NODES3],
+           saidaideal[NODES3], /* vetor resultado ideal ou label do numero lido */
            bias = 1;
     int indice;
     int i, j, k, n;
@@ -187,8 +189,16 @@ int main(void)
             {
                 c.v3[j] += c.wmap3[j][k] * c.v2[k];
             }
-            c.v3[j] = activation(c.v3[j]);
+            c.v3[j] = activation(c.v3[j]); /* a saida v3 eh o vetor resultado que nos diz o numero que a rede supoe que seja */
+
+            saidaideal[j] = 0;
+            erro[j] = 0;
         }
+
+        /* calculo do erro */
+        saidaideal[(int)img[i][784]] = 1;
+        for(j = 0; j < NODES3; j++)
+            erro[j] = saidaideal[j] - c.v3[j];
 
         /* . . . . . . . . . . . . . . */
         /* BACKWARD COMPUTATION */
