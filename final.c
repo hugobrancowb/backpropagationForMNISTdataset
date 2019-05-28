@@ -150,13 +150,11 @@ int train(void) {
     /* kohonen_t koh; */
     FILE *fp;
     double erro[NODES3],
-           saidaideal[NODES3], /* vetor resultado ideal ou label do numero lido */
-           bias;
+           saidaideal[NODES3]; /* vetor resultado ideal ou label do numero lido */
     int i, j, k, n;
 
     /* codigo */
     c -> eta = 0.005;
-    bias = 1;
 
     srand(time(NULL));
 
@@ -221,8 +219,14 @@ int train(void) {
     delta1 = (double *)malloc(NODES1*sizeof(double));
     delta2 = (double *)malloc(NODES2*sizeof(double));
     delta3 = (double *)malloc(NODES3*sizeof(double));
+    double *bias1;
+    double *bias2;
+    double *bias3;
+    bias1 = (double *)malloc(NODES1*sizeof(double));
+    bias2 = (double *)malloc(NODES2*sizeof(double));
+    bias3 = (double *)malloc(NODES3*sizeof(double));
 
-    /* inicializacao dos mapas de pesos */
+    /* inicializacao dos mapas de pesos e bias */
     for(i = 0; i < NODES1; i++)
         for(j = 0; j < h.lin*h.col; j++)
             c -> wmap1[i][j] = (rand()%100 - rand()%50)/100.0;
@@ -234,6 +238,15 @@ int train(void) {
     for(i = 0; i < NODES3; i++)
         for(j = 0; j < NODES2; j++)
             c -> wmap3[i][j] = (rand()%100 - rand()%50)/100.0;
+    
+    for(i = 0; i < NODES1; i++)
+        bias1[i] = (rand()%100 - rand()%50)/100.0;
+
+    for(i = 0; i < NODES2; i++)
+        bias2[i] = (rand()%100 - rand()%50)/100.0;
+
+    for(i = 0; i < NODES3; i++)
+        bias3[i] = (rand()%100 - rand()%50)/100.0;
 
     /* 'i': imagem atual -- numero total de imagens para treinar a rede */
     for(i = 0; i < h.ni; i++)
@@ -244,38 +257,37 @@ int train(void) {
         /* primeiro layer */
         for(j = 0; j < NODES1; j++)
         {
-            v1[j] = bias;
+            v1[j] = bias1[j];
             for(k = 0; k < 784; k++)
-            {
                 v1[j] += c -> wmap1[j][k] * imgVec[i*785 + k];
-            }
+
             y1[j] = activation(v1[j]);
         }
 
         /* segundo layer */
         for(j = 0; j < NODES2; j++)
         {
-            v2[j] = bias;
+            v2[j] = bias2[j];
             for(k = 0; k < NODES1; k++)
-            {
                 v2[j] += c -> wmap2[j][k] * y1[k];
-            }
+
             y2[j] = activation(v2[j]);
         }
 
         /* terceiro layer */
         for(j = 0; j < NODES3; j++)
         {
-            v3[j] = bias;
+            v3[j] = bias3[j];
             for(k = 0; k < NODES2; k++)
-            {
                 v3[j] += c -> wmap3[j][k] * y2[k];
-            }
+
             y3[j] = activation(v3[j]); /* a saida v3 eh o vetor resultado que nos diz o numero que a rede supoe que seja */
+            printf("%1.2lf ",y3[j]);
 
             saidaideal[j] = 0;
             erro[j] = 0;
         }
+        printf("\n");
 
         /* . . . . . . . . . . . . . . */
         /* BACKWARD COMPUTATION */
