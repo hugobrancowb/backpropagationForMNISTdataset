@@ -129,7 +129,7 @@ int main(int argc, char *argv[])
 /* funcao de ativacao */
 double activation(double v)
 {
-    double y = 1/(1+exp(-v));
+    double y = 1/(1 + exp(-v));
     return y;
 }
 
@@ -154,7 +154,7 @@ int train(void) {
     int i, j, k, n;
 
     /* codigo */
-    c -> eta = 0.005;
+    c -> eta = 0.05;
 
     srand(time(NULL));
 
@@ -451,7 +451,7 @@ int train(void) {
         fclose(temp); 
     }
 
-    free(imgVec); free(c);
+    free(imgVec); free(c); free(img);
     free(v1); free(v2); free(v3); 
     free(y1); free(y2); free(y3); 
     free(delta1); free(delta2); free(delta3);
