@@ -318,6 +318,85 @@ int train(void) {
         }
     }
 
+    /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
+    /* teste da rede */
+
+    header_t htest;
+    FILE *testep;
+    if((testep=fopen("test-4k-images-labels", "rb"))==NULL)
+    {
+        printf("Nao consigo abrir arquivo %s\n", "test-4k-images-labels");
+        exit(1);
+    }
+
+    fread(&htest, sizeof(header_t), 1, testep);
+    unsigned char *entradateste;
+    entradateste = (unsigned char *)malloc(785 * sizeof(unsigned char));
+    double *vin;
+    vin = (double *)malloc(785 * sizeof(double));
+    for(i=0; i<10; i++)
+    {
+        if((n=fread(entradateste, sizeof(unsigned char), 785, testep)) == 785)
+        {
+            for(j = 0; j <= 784; j++)
+            {
+                if(j == 784)
+                    vin[j] = entradateste[j]*1.0;
+                else
+                    vin[j] = entradateste[j]/255.0;
+            }
+            
+            /* . . . . . . . . . . . . . . */
+            /* FORWARD COMPUTATION */
+
+            /* primeiro layer */
+            for(j = 0; j < NODES1; j++)
+            {
+                v1[j] = bias;
+                for(k = 0; k < 784; k++)
+                {
+                    v1[j] += c -> wmap1[j][k] * entradateste[k];
+                }
+                y1[j] = activation(v1[j]);
+            }
+
+            /* segundo layer */
+            for(j = 0; j < NODES2; j++)
+            {
+                v2[j] = bias;
+                for(k = 0; k < NODES1; k++)
+                {
+                    v2[j] += c -> wmap2[j][k] * y1[k];
+                }
+                y2[j] = activation(v2[j]);
+            }
+
+            double max=0;
+            int indice=0;
+            /* terceiro layer */
+            for(j = 0; j < NODES3; j++)
+            {
+                v3[j] = bias;
+                for(k = 0; k < NODES2; k++)
+                {
+                    v3[j] += c -> wmap3[j][k] * y2[k];
+                }
+                y3[j] = activation(v3[j]); /* a saida v3 eh o vetor resultado que nos diz o numero que a rede supoe que seja */
+                
+                if(y3[j] > max)
+                {
+                    max = y3[j];
+                    indice = j;
+                }
+                printf("%1.3lf  ",y3[j]);
+            }
+            printf("\nnumero lido // adivinhado:\t%u\t",entradateste[784]);
+            printf("%d\n",indice);
+        }
+    }
+
+    free(entradateste); fclose(testep);
+    /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
     /* save the neural network as a binary file */
     /* salvar o mapa gerado em dados binarios */
     FILE *temp;
