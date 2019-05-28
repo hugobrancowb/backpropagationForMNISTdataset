@@ -297,38 +297,66 @@ int train(void) {
         for(j = 0; j < NODES3; j++)
             erro[j] = saidaideal[j] - y3[j];
         
-        /* terceiro layer */
+        /* delta do terceiro layer */
+        for(j = 0; j < NODES3; j++)
+            delta3[j] = erro[j] * d_activation(v3[j]);
+
+        /* delta do segundo layer */
+        for(j = 0; j < NODES2; j++)
+            delta2[j] = 0;
+
         for(j = 0; j < NODES3; j++)
         {
-            delta3[j] = erro[j] * d_activation(v3[j]);
             for(k = 0; k < NODES2; k++)
-                c -> wmap3[j][k] += c -> eta * delta3[j] * y2[k];
+                delta2[k] += delta3[j] * c -> wmap3[j][k];
+        }
+        
+        for(j = 0; j < NODES2; j++)
+            delta2[j] *= d_activation(v2[j]);
+
+        /* delta do primeiro layer */
+        for(j = 0; j < NODES1; j++)
+            delta1[j] = 0;
+
+        for(j = 0; j < NODES2; j++)
+        {
+            for(k = 0; k < NODES1; k++)
+                delta1[k] += delta2[j] * c -> wmap2[j][k];
+        }
+        
+        for(j = 0; j < NODES1; j++)
+            delta1[j] *= d_activation(v1[j]);
+        
+        /* ........................ */
+        /* atualização das matrizes */
+        /* primeiro layer */
+        for(j = 0; j < NODES1; j++)
+        {
+            for(k = 0; k < 784; k++)
+            {
+                c -> wmap1[j][k] += (c -> eta * delta1[j] * imgVec[k]);
+            }
+            bias1[j] += (c -> eta * delta1[j]);
         }
 
         /* segundo layer */
         for(j = 0; j < NODES2; j++)
         {
-            delta2[j] = 0;
-            for(k = 0; k < NODES3; k++)
-                delta2[j] += delta3[k] * c -> wmap3[k][j];
-            
-            delta2[j] = delta2[j] * d_activation(v2[j]);
-
             for(k = 0; k < NODES1; k++)
-                c -> wmap2[j][k] += c -> eta * delta2[j] * y1[k];
+                {
+                    c -> wmap2[j][k] += (c -> eta * delta2[j] * y1[k]);
+                }
+            bias2[j] += (c -> eta * delta2[j]);
         }
 
-        /* primeiro layer */
-        for(j = 0; j < NODES1; j++)
+        /* terceiro layer */
+        for(j = 0; j < NODES3; j++)
         {
-            delta1[j] = 0;
             for(k = 0; k < NODES2; k++)
-                delta1[j] += delta2[k] * c -> wmap2[k][j];
-            
-            delta1[j] = delta1[j] * d_activation(v1[j]);
-
-            for(k = 0; k < 784; k++)
-                c -> wmap1[j][k] += c -> eta * delta1[j] * imgVec[i*785 + k];
+            {
+                c -> wmap3[j][k] += (c -> eta * delta3[j] * y2[k]);
+            }
+            bias3[j] += (c -> eta * delta3[j]);
         }
     }
 
