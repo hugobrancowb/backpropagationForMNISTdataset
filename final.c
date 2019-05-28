@@ -7,6 +7,7 @@
 /* #include <unistd.h> */
 /* #include <error.h> */
 /* #include <errno.h> */
+#include <getopt.h> /* get options from system argc/argv */
 #include <time.h>
 #include <string.h>
 
@@ -72,6 +73,8 @@ void copyr(void); /* print version and copyright information */
 
 double activation(double v); /* funcao de ativacao */
 double d_activation(double v); /* derivada da funcao de ativacao */
+int train(void); /* treina uma rede neural */
+void help(void); /* imprime ajuda */
 
 /* ---------------------------------------------------------------------- */
 /* types */
@@ -91,8 +94,55 @@ xxxx     unsigned byte   ??               pixel
 xxxx     unsigned byte   ??               label
 */
 
-int main(void)
+int main(int argc, char *argv[])
 {
+    int opt; /* return from getopt() */
+
+    IFDEBUG("Starting optarg loop...");
+
+    /* getopt() configured options:
+     *        -h  help
+     *        -t  train a neural network
+     *        -r  run the saved neural network
+     */
+
+    opterr = 0;
+    while((opt = getopt(argc, argv, "trh")) != EOF)
+        switch(opt)
+        {
+            case 't':
+                train();
+                break;
+            case 'r':
+                /*runtest();*/
+                break;
+            case '?':
+            default:
+                help();
+                return EXIT_FAILURE;
+        }
+
+    help();
+    return EXIT_SUCCESS;
+}
+
+/* funcao de ativacao */
+double activation(double v)
+{
+    double y = 1/(1+exp(-v));
+    return y;
+}
+
+/* derivada da funcao de ativacao */
+double d_activation(double v)
+{
+    double av = activation(v);
+    double dy = av * (1 - av);
+    return dy;
+}
+
+/* treina uma rede neural */
+int train(void) {
     /* declaracoes de variaveis locais */
     header_t h;
     /* config_t c; */
@@ -273,22 +323,7 @@ int main(void)
     free(y1); free(y2); free(y3); 
     free(delta1); free(delta2); free(delta3);
 
-    return EXIT_SUCCESS;
-}
-
-/* funcao de ativacao */
-double activation(double v)
-{
-    double y = 1/(1+exp(-v));
-    return y;
-}
-
-/* derivada da funcao de ativacao */
-double d_activation(double v)
-{
-    double av = activation(v);
-    double dy = av * (1 - av);
-    return dy;
+    exit(EXIT_SUCCESS);
 }
 
 
