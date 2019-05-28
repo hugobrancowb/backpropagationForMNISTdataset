@@ -225,15 +225,15 @@ int train(void) {
     /* inicializacao dos mapas de pesos */
     for(i = 0; i < NODES1; i++)
         for(j = 0; j < h.lin*h.col; j++)
-            c -> wmap1[i][j] = (rand()%100)/100000.0;
+            c -> wmap1[i][j] = (rand()%100 - rand()%50)/100.0;
 
     for(i = 0; i < NODES2; i++)
         for(j = 0; j < NODES1; j++)
-            c -> wmap2[i][j] = (rand()%100)/100000.0;
+            c -> wmap2[i][j] = (rand()%100 - rand()%50)/100.0;
 
     for(i = 0; i < NODES3; i++)
         for(j = 0; j < NODES2; j++)
-            c -> wmap3[i][j] = (rand()%100)/100000.0;
+            c -> wmap3[i][j] = (rand()%100 - rand()%50)/100.0;
 
     /* 'i': imagem atual -- numero total de imagens para treinar a rede */
     for(i = 0; i < h.ni; i++)
