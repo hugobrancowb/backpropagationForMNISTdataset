@@ -318,6 +318,23 @@ int train(void) {
         }
     }
 
+    /* save the neural network as a binary file */
+    /* salvar o mapa gerado em dados binarios */
+    FILE *temp;
+    if((temp=fopen("wmap", "wb"))!=NULL)
+    {
+        for(i = 0; i < NODES1; i++)
+            fwrite(&c -> wmap1[i], 784*sizeof(double), 1, temp);
+
+        for(i = 0; i < NODES2; i++)
+            fwrite(&c -> wmap2[i], NODES1*sizeof(double), 1, temp);
+
+        for(i = 0; i < NODES3; i++)
+            fwrite(&c -> wmap3[i], NODES2*sizeof(double), 1, temp);
+
+        fclose(temp); 
+    }
+
     free(imgVec); free(c);
     free(v1); free(v2); free(v3); 
     free(y1); free(y2); free(y3); 
