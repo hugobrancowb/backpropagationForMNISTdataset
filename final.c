@@ -137,7 +137,7 @@ double activation(double v)
 double d_activation(double v)
 {
     double av = activation(v);
-    double dy = av * (1 - av);
+    double dy = pow(av,2)*exp(-v);
     return dy;
 }
 
