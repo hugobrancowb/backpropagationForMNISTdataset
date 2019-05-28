@@ -5,6 +5,7 @@
 # Usage: ./build.sh
 
 #astyle -A1 -s4 -k3 -xj -SCNeUpv final
+#gcc teste.c -o teste.x -Wall -Wextra -g -std=c99 -lm -O0 -fPIC
 gcc final.c -o final.x -Wall -Wextra -g -std=c99 -lm -O0 -fPIC
 #make final.x
 
@@ -16,7 +17,7 @@ while getopts ":hvftr" opt; do
       scp final.c final.x hbwb@beco.poli.br:ia/rascunhos/backpropagation/. >&2
       ;;
     v)
-      valgrind --leak-check=full --track-origins=yes ./final.x >&2
+      valgrind -v --leak-check=full --track-origins=yes ./final.x -t >&2
       ;;
     f)
       astyle -A1 -s4 -k3 -xj -SCNeUpv final.c >&2
