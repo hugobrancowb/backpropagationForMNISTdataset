@@ -179,10 +179,12 @@ int train(void) {
     img = (unsigned char *)malloc(sizeof(unsigned char)*((h.lin*h.col)+1)*h.ni);
 
     i=0;
-    while((n=fread(img, h.ni*sizeof(kohonen_t), 1, fp)) == 1)
+    while((n=fread(&img[i], sizeof(unsigned char), 1, fp)) == 1)
         i++;
     fclose(fp);
-    
+        
+    printf("\n");
+
     double *imgVec;
     imgVec = (double *)malloc(sizeof(double)*((h.lin*h.col)+1)*h.ni);
 
