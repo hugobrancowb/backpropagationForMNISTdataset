@@ -193,14 +193,14 @@ int train(void) {
         for(j = 0; j <= 784; j++)
         {
             if(j == 784)
-            {
                 imgVec[i*785 + j] = img[i*785 + j]*1.0;
-                /* if(DEBUG) printf("%3.2lf\n", imgVec[i*785 + j]); */
-            }
             else
-                imgVec[i*785 + j] = img[i*785 + j]/255.0;
+                imgVec[i*785 + j] = (img[i*785 + j]*1.0);
         }
-    free(img);
+
+    for(i = 0; i < h.ni; i++)
+        for(j = 0; j < 784; j++)
+                imgVec[i*785 + j] = imgVec[i*785 + j]/255 - 0.5;
 
     /* variaveis */
     double *v1;
