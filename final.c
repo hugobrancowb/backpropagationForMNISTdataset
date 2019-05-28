@@ -19,7 +19,7 @@
 
 /* Debug */
 #ifndef DEBUG /* gcc -DDEBUG=1 */
-#define DEBUG 0 /* Activate/deactivate debug mode */
+#define DEBUG 1 /* Activate/deactivate debug mode */
 #endif
 
 #if DEBUG==1
@@ -97,12 +97,11 @@ int main(void)
     header_t h;
     /* config_t c; */
     struct sconfig *c = (struct sconfig*)malloc(sizeof(struct sconfig));
-    kohonen_t koh;
+    /* kohonen_t koh; */
     FILE *fp;
     double erro[NODES3],
            saidaideal[NODES3], /* vetor resultado ideal ou label do numero lido */
            bias;
-    int indice;
     int i, j, k, n;
 
     /* codigo */
@@ -132,6 +131,7 @@ int main(void)
     i=0;
     while((n=fread(&img[i], h.ni*sizeof(kohonen_t), 1, fp)) == 1)
         i++;
+    fclose(fp);
     
     double *imgVec;
     imgVec = (double *)malloc(sizeof(double)*((h.lin*h.col)+1)*h.ni);
@@ -143,14 +143,12 @@ int main(void)
             if(j == 784)
             {
                 imgVec[i*785 + j] = img[i*785 + j]*1.0;
-                printf("%3.2lf\n", imgVec[i*785 + j]);
+                /* if(DEBUG) printf("%3.2lf\n", imgVec[i*785 + j]); */
             }
             else
                 imgVec[i*785 + j] = img[i*785 + j]/255.0;
         }
-
-    if(DEBUG)
-        return 0;
+    free(img);
 
     /* variaveis */
     double *v1;
@@ -197,7 +195,7 @@ int main(void)
             v1[j] = bias;
             for(k = 0; k < 784; k++)
             {
-                //v1[j] += c -> wmap1[j][k] * imgVec[i][k];
+                v1[j] += c -> wmap1[j][k] * imgVec[i*785 + k];
             }
             y1[j] = activation(v1[j]);
         }
@@ -231,7 +229,7 @@ int main(void)
         /* BACKWARD COMPUTATION */
 
         /* calculo do erro */
-        //saidaideal[(int)imgVec[i][784]] = 1;
+        saidaideal[(int)imgVec[i*785 + 784]] = 1;
         for(j = 0; j < NODES3; j++)
             erro[j] = saidaideal[j] - y3[j];
         
@@ -239,8 +237,8 @@ int main(void)
         for(j = 0; j < NODES3; j++)
         {
             delta3[j] = erro[j] * d_activation(v3[j]);
-            //for(k = 0; k < NODES2; k++)
-                //c -> wmap3[j][k] += eta * delta3[j] * y2[k];
+            for(k = 0; k < NODES2; k++)
+                c -> wmap3[j][k] += c -> eta * delta3[j] * y2[k];
         }
 
         /* segundo layer */
@@ -252,8 +250,8 @@ int main(void)
             
             delta2[j] = delta2[j] * d_activation(v2[j]);
 
-            //for(k = 0; k < NODES1; k++)
-                //c -> wmap2[j][k] += eta * delta2[j] * y1[k];
+            for(k = 0; k < NODES1; k++)
+                c -> wmap2[j][k] += c -> eta * delta2[j] * y1[k];
         }
 
         /* primeiro layer */
@@ -265,15 +263,15 @@ int main(void)
             
             delta1[j] = delta1[j] * d_activation(v1[j]);
 
-            //for(k = 0; k < 784; k++)
-                //c -> wmap1[j][k] += eta * delta1[j] * imgVec[i][k];
+            for(k = 0; k < 784; k++)
+                c -> wmap1[j][k] += c -> eta * delta1[j] * imgVec[i*785 + k];
         }
     }
 
-    free(img);
-    free(imgVec);
-    /* fechar arquivos */
-    fclose(fp);
+    free(imgVec); free(c);
+    free(v1); free(v2); free(v3); 
+    free(y1); free(y2); free(y3); 
+    free(delta1); free(delta2); free(delta3);
 
     return EXIT_SUCCESS;
 }
