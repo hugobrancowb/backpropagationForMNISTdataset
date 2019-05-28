@@ -385,54 +385,49 @@ int train(void) {
                 if(j == 784)
                     vin[j] = entradateste[j]*1.0;
                 else
-                    vin[j] = entradateste[j]/255.0;
+                    vin[j] = entradateste[j]/255 - 0.5;
             }
-            
+
             /* . . . . . . . . . . . . . . */
             /* FORWARD COMPUTATION */
 
             /* primeiro layer */
             for(j = 0; j < NODES1; j++)
             {
-                v1[j] = bias;
+                v1[j] = bias1[j];
                 for(k = 0; k < 784; k++)
-                {
-                    v1[j] += c -> wmap1[j][k] * entradateste[k];
-                }
+                    v1[j] += c -> wmap1[j][k] * imgVec[i*785 + k];
+
                 y1[j] = activation(v1[j]);
             }
 
             /* segundo layer */
             for(j = 0; j < NODES2; j++)
             {
-                v2[j] = bias;
+                v2[j] = bias2[j];
                 for(k = 0; k < NODES1; k++)
-                {
                     v2[j] += c -> wmap2[j][k] * y1[k];
-                }
+
                 y2[j] = activation(v2[j]);
             }
-
+            
             double max=0;
             int indice=0;
             /* terceiro layer */
             for(j = 0; j < NODES3; j++)
             {
-                v3[j] = bias;
+                v3[j] = bias3[j];
                 for(k = 0; k < NODES2; k++)
-                {
                     v3[j] += c -> wmap3[j][k] * y2[k];
-                }
+
                 y3[j] = activation(v3[j]); /* a saida v3 eh o vetor resultado que nos diz o numero que a rede supoe que seja */
-                
                 if(y3[j] > max)
                 {
                     max = y3[j];
                     indice = j;
                 }
-                printf("%1.3lf  ",y3[j]);
             }
-            printf("\nnumero lido // adivinhado:\t%u\t",entradateste[784]);
+            printf("%u\t",entradateste[784]);
             printf("%d\n",indice);
         }
     }
