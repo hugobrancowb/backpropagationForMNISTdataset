@@ -155,7 +155,7 @@ int train(void) {
     int i, j, k, n;
 
     /* codigo */
-    c -> eta = 0.1;
+    c -> eta = 0.005;
     bias = 1;
 
     srand(time(NULL));
