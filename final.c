@@ -332,15 +332,13 @@ int train(void) {
  *  usually called by opt -h or --help
  */
 void help(void)
-{
-    IFDEBUG("help()");
-    printf("%s - %s\n", "lebase", "le base de digitos de 0 a 9");
-    printf("\nUsage: %s\n\n", "lebase");
-    printf("This program does...\n");
-    /* add more stuff here */
-    printf("\nExit status:\n\t0 if ok.\n\t1 some error occurred.\n");
-    printf("\nTodo:\n\tLong options not implemented yet.\n");
-    printf("\nAuthor:\n\tWritten by %s <%s>\n\n", "Ruben Carlo Benante", "rcb@beco.cc");
+{    
+    printf("-t\t train the neural network\n");
+    printf("-r\t run the neural network\n");
+    printf("-h\t help\n\n");
+    /* printf("\nExit status:\n\t0 if ok.\n\t1 some error occurred.\n"); */
+    /* printf("\nTodo:\n\tLong options not implemented yet.\n"); */
+    printf("\nAuthor:\n\tWritten by %s <%s>\n\n", "Hugo Branco W. Barbosa", "hugobrancowb@gmail.com");
     return;
 }
 
