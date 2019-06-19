@@ -77,6 +77,8 @@ double d_activation(double v); /* derivada da funcao de ativacao */
 int train(void); /* treina uma rede neural */
 void help(void); /* imprime ajuda */
 
+int runtest(void);
+
 /* ---------------------------------------------------------------------- */
 /* types */
 /* 
@@ -115,7 +117,7 @@ int main(int argc, char *argv[])
                 train();
                 break;
             case 'r':
-                /*runtest();*/
+                runtest();
                 break;
             case '?':
             default:
@@ -144,7 +146,8 @@ double d_activation(double v)
 }
 
 /* treina uma rede neural */
-int train(void) {
+int train(void) 
+{
     /* declaracoes de variaveis locais */
     header_t h;
     /* config_t c; */
@@ -154,6 +157,30 @@ int train(void) {
     double erro[NODES3],
            saidaideal[NODES3]; /* vetor resultado ideal ou label do numero lido */
     int i, j, k, n;
+
+    unsigned char *img;
+    double *imgVec;
+
+    double *v1;
+    double *v2;
+    double *v3;
+    double *y1;
+    double *y2;
+    double *y3;
+    double *delta1;
+    double *delta2;
+    double *delta3;
+    double *bias1;
+    double *bias2;
+    double *bias3;
+
+    double *sum;
+    header_t htest;
+    FILE *testep;
+    FILE *temp;
+    unsigned char *entradateste;
+    double *vin;
+
 
     /* codigo */
     srand(time(NULL));
@@ -173,7 +200,6 @@ int train(void) {
     printf("Num. colunas por imagem: %d\n", h.col);
     printf("Lendo imagens %d x %d\n", h.lin, h.col);
     
-    unsigned char *img;
     img = (unsigned char *)malloc(sizeof(unsigned char)*((h.lin*h.col)+1)*h.ni);
 
     i=0;
@@ -183,7 +209,6 @@ int train(void) {
         
     printf("\n");
 
-    double *imgVec;
     imgVec = (double *)malloc(sizeof(double)*((h.lin*h.col)+1)*h.ni);
 
     /* normalizacao dos valores de entrada */
@@ -197,32 +222,19 @@ int train(void) {
         }
 
     /* variaveis */
-    double *v1;
-    double *v2;
-    double *v3;
     v1 = (double *)malloc(NODES1*sizeof(double));
     v2 = (double *)malloc(NODES2*sizeof(double));
     v3 = (double *)malloc(NODES3*sizeof(double));
-    double *y1;
-    double *y2;
-    double *y3;
     y1 = (double *)malloc(NODES1*sizeof(double));
     y2 = (double *)malloc(NODES2*sizeof(double));
     y3 = (double *)malloc(NODES3*sizeof(double));
-    double *delta1;
-    double *delta2;
-    double *delta3;
     delta1 = (double *)malloc(NODES1*sizeof(double));
     delta2 = (double *)malloc(NODES2*sizeof(double));
     delta3 = (double *)malloc(NODES3*sizeof(double));
-    double *bias1;
-    double *bias2;
-    double *bias3;
     bias1 = (double *)malloc(NODES1*sizeof(double));
     bias2 = (double *)malloc(NODES2*sizeof(double));
     bias3 = (double *)malloc(NODES3*sizeof(double));
     
-    double *sum;
     sum = (double *)malloc(NODES3 * sizeof(double));
 
     /* inicializacao dos mapas de pesos e bias */
@@ -380,8 +392,6 @@ int train(void) {
     /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
     /* teste da rede */
 
-    header_t htest;
-    FILE *testep;
     if((testep=fopen("test-4k-images-labels", "rb"))==NULL)
     {
         printf("Nao consigo abrir arquivo %s\n", "test-4k-images-labels");
@@ -389,9 +399,7 @@ int train(void) {
     }
 
     fread(&htest, sizeof(header_t), 1, testep);
-    unsigned char *entradateste;
     entradateste = (unsigned char *)malloc(785 * sizeof(unsigned char));
-    double *vin;
     vin = (double *)malloc(785 * sizeof(double));
     for(i=0; i<20; i++)
     {
@@ -476,7 +484,6 @@ int train(void) {
     /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
     /* save the neural network as a binary file */
     /* salvar o mapa gerado em dados binarios */
-    FILE *temp;
     if((temp=fopen("wmap", "wb"))!=NULL)
     {
         for(i = 0; i < NODES1; i++)
@@ -500,6 +507,12 @@ int train(void) {
     exit(EXIT_SUCCESS);
 }
 
+
+int runtest(void)
+{
+    printf("funcao nao implementada\n");
+    ;
+}
 
 /* ---------------------------------------------------------------------- */
 /* Prints help information 
