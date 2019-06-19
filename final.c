@@ -36,10 +36,11 @@
 /* #define NOMEARQ "t10k-images-idx3-ubyte" */
 #define NOMEARQ "train-6k-images-labels"
 
-#define NODES1 16
-#define NODES2 16
+#define NODES1 100
+#define NODES2 50
 #define NODES3 10
 #define PIXELS 28
+#define LEARN 0.1
 #define N_IMAGENS 6000
 
 typedef struct s_header
@@ -136,8 +137,9 @@ double activation(double v)
 /* derivada da funcao de ativacao */
 double d_activation(double v)
 {
-    double av = activation(v);
-    double dy = pow(av,2)*exp(-v);
+    //double av = activation(v);
+    //double dy = pow(av,2)*exp(-v);
+    double dy = exp(v)/(pow((exp(v) + 1), 2));
     return dy;
 }
 
@@ -154,8 +156,6 @@ int train(void) {
     int i, j, k, n;
 
     /* codigo */
-    c -> eta = 0.05;
-
     srand(time(NULL));
 
     if((fp=fopen(NOMEARQ, "rb"))==NULL)
@@ -193,12 +193,8 @@ int train(void) {
             if(j == 784)
                 imgVec[i*785 + j] = img[i*785 + j]*1.0;
             else
-                imgVec[i*785 + j] = (img[i*785 + j]*1.0);
+                imgVec[i*785 + j] = ((img[i*785 + j]*1.0)/255);
         }
-
-    for(i = 0; i < h.ni; i++)
-        for(j = 0; j < 784; j++)
-                imgVec[i*785 + j] = imgVec[i*785 + j]/255 - 0.5;
 
     /* variaveis */
     double *v1;
@@ -225,32 +221,37 @@ int train(void) {
     bias1 = (double *)malloc(NODES1*sizeof(double));
     bias2 = (double *)malloc(NODES2*sizeof(double));
     bias3 = (double *)malloc(NODES3*sizeof(double));
+    
+    double *sum;
+    sum = (double *)malloc(NODES3 * sizeof(double));
 
     /* inicializacao dos mapas de pesos e bias */
     for(i = 0; i < NODES1; i++)
         for(j = 0; j < h.lin*h.col; j++)
-            c -> wmap1[i][j] = (rand()%100 - rand()%50)/100.0;
+            c -> wmap1[i][j] = (rand()%100/100.0) - 0.5;
 
     for(i = 0; i < NODES2; i++)
         for(j = 0; j < NODES1; j++)
-            c -> wmap2[i][j] = (rand()%100 - rand()%50)/100.0;
+            c -> wmap2[i][j] = (rand()%100/100.0) - 0.5;
 
     for(i = 0; i < NODES3; i++)
         for(j = 0; j < NODES2; j++)
-            c -> wmap3[i][j] = (rand()%100 - rand()%50)/100.0;
+            c -> wmap3[i][j] = (rand()%100/100.0) - 0.5;
     
     for(i = 0; i < NODES1; i++)
-        bias1[i] = (rand()%100 - rand()%50)/100.0;
+        bias1[i] = (rand()%100/100.0) - 0.5;
 
     for(i = 0; i < NODES2; i++)
-        bias2[i] = (rand()%100 - rand()%50)/100.0;
+        bias2[i] = (rand()%100/100.0) - 0.5;
 
     for(i = 0; i < NODES3; i++)
-        bias3[i] = (rand()%100 - rand()%50)/100.0;
+        bias3[i] = (rand()%100/100.0) - 0.5;
 
     /* 'i': imagem atual -- numero total de imagens para treinar a rede */
+    /* for(i = 0; i < h.ni; i++) */
     for(i = 0; i < h.ni; i++)
     {
+        c -> eta = LEARN*h.ni/(i+h.ni); /* atualização na learning rate */
         /* . . . . . . . . . . . . . . */
         /* FORWARD COMPUTATION */
 
@@ -282,7 +283,7 @@ int train(void) {
                 v3[j] += c -> wmap3[j][k] * y2[k];
 
             y3[j] = activation(v3[j]); /* a saida v3 eh o vetor resultado que nos diz o numero que a rede supoe que seja */
-            printf("%1.2lf ",y3[j]);
+            printf("%1.2lf ", y3[j]);
 
             saidaideal[j] = 0;
             erro[j] = 0;
@@ -292,14 +293,42 @@ int train(void) {
         /* . . . . . . . . . . . . . . */
         /* BACKWARD COMPUTATION */
 
+        /* normalizar saída */
+        /* double max;
+        for(j = 0; j < NODES3; j++)
+        {
+            if(j == 0)
+                max = y3[j];
+            else
+            {
+                if (y3[j] > max)
+                    max = y3[j];
+            }
+        }
+        for(j = 0; j < NODES3; j++)
+            y3[j] = y3[j]/max; */
+
         /* calculo do erro */
         saidaideal[(int)imgVec[i*785 + 784]] = 1;
         for(j = 0; j < NODES3; j++)
-            erro[j] = saidaideal[j] - y3[j];
+            erro[j] = y3[j] - saidaideal[j];
+        
+        /* ........................ */
+        /* atualização das matrizes */
         
         /* delta do terceiro layer */
         for(j = 0; j < NODES3; j++)
-            delta3[j] = erro[j] * d_activation(v3[j]);
+            delta3[j] = (2)*erro[j] * d_activation(v3[j]);
+
+        /* terceiro layer */
+        for(j = 0; j < NODES3; j++)
+        {
+            for(k = 0; k < NODES2; k++)
+            {
+                c -> wmap3[j][k] -= (c -> eta * delta3[j] * y2[k]);
+            }
+            bias3[j] -= (c -> eta * delta3[j]);
+        }
 
         /* delta do segundo layer */
         for(j = 0; j < NODES2; j++)
@@ -308,11 +337,21 @@ int train(void) {
         for(j = 0; j < NODES3; j++)
         {
             for(k = 0; k < NODES2; k++)
-                delta2[k] += delta3[j] * c -> wmap3[j][k];
+                delta2[k] += delta3[k] * c -> wmap3[j][k];
         }
         
         for(j = 0; j < NODES2; j++)
-            delta2[j] *= d_activation(v2[j]);
+            delta2[j] = delta2[j] * d_activation(v2[j]);
+
+        /* segundo layer */
+        for(j = 0; j < NODES2; j++)
+        {
+            for(k = 0; k < NODES1; k++)
+                {
+                    c -> wmap2[j][k] -= (c -> eta * delta2[j] * y1[k]);
+                }
+            bias2[j] -= (c -> eta * delta2[j]);
+        }
 
         /* delta do primeiro layer */
         for(j = 0; j < NODES1; j++)
@@ -321,42 +360,20 @@ int train(void) {
         for(j = 0; j < NODES2; j++)
         {
             for(k = 0; k < NODES1; k++)
-                delta1[k] += delta2[j] * c -> wmap2[j][k];
+                delta1[k] += delta2[k] * c -> wmap2[j][k];
         }
         
         for(j = 0; j < NODES1; j++)
-            delta1[j] *= d_activation(v1[j]);
-        
-        /* ........................ */
-        /* atualização das matrizes */
+            delta1[j] = delta1[j] * d_activation(v1[j]);
+
         /* primeiro layer */
         for(j = 0; j < NODES1; j++)
         {
             for(k = 0; k < 784; k++)
             {
-                c -> wmap1[j][k] += (c -> eta * delta1[j] * imgVec[k]);
+                c -> wmap1[j][k] -= (c -> eta * delta1[j] * imgVec[k]);
             }
-            bias1[j] += (c -> eta * delta1[j]);
-        }
-
-        /* segundo layer */
-        for(j = 0; j < NODES2; j++)
-        {
-            for(k = 0; k < NODES1; k++)
-                {
-                    c -> wmap2[j][k] += (c -> eta * delta2[j] * y1[k]);
-                }
-            bias2[j] += (c -> eta * delta2[j]);
-        }
-
-        /* terceiro layer */
-        for(j = 0; j < NODES3; j++)
-        {
-            for(k = 0; k < NODES2; k++)
-            {
-                c -> wmap3[j][k] += (c -> eta * delta3[j] * y2[k]);
-            }
-            bias3[j] += (c -> eta * delta3[j]);
+            bias1[j] -= (c -> eta * delta1[j]);
         }
     }
 
@@ -376,7 +393,7 @@ int train(void) {
     entradateste = (unsigned char *)malloc(785 * sizeof(unsigned char));
     double *vin;
     vin = (double *)malloc(785 * sizeof(double));
-    for(i=0; i<10; i++)
+    for(i=0; i<20; i++)
     {
         if((n=fread(entradateste, sizeof(unsigned char), 785, testep)) == 785)
         {
@@ -385,7 +402,7 @@ int train(void) {
                 if(j == 784)
                     vin[j] = entradateste[j]*1.0;
                 else
-                    vin[j] = entradateste[j]/255 - 0.5;
+                    vin[j] = (entradateste[j]*1.0/255);
             }
 
             /* . . . . . . . . . . . . . . */
@@ -410,9 +427,7 @@ int train(void) {
 
                 y2[j] = activation(v2[j]);
             }
-            
-            double max=0;
-            int indice=0;
+
             /* terceiro layer */
             for(j = 0; j < NODES3; j++)
             {
@@ -420,15 +435,40 @@ int train(void) {
                 for(k = 0; k < NODES2; k++)
                     v3[j] += c -> wmap3[j][k] * y2[k];
 
-                y3[j] = activation(v3[j]); /* a saida v3 eh o vetor resultado que nos diz o numero que a rede supoe que seja */
-                if(y3[j] > max)
-                {
-                    max = y3[j];
-                    indice = j;
+                y3[j] = activation(v3[j]);
+            }
+            
+            /* Verificacao */            
+            for(j = 0; j < NODES3; j++)
+            {
+                sum[j] = 0;
+                for(k = 0; k < NODES3; k++)
+                {   
+                    if(k == j)
+                        sum[j] += pow((y3[k]-1),2) ;
+                    else
+                        sum[j] += pow(y3[k],2) ;
                 }
             }
-            printf("%u\t",entradateste[784]);
-            printf("%d\n",indice);
+            
+            k = 0;
+            for(j = 1; j < NODES3; j++)
+                if(sum[k] > sum[j])
+                    k = j;
+           
+            /* 
+            k = 0;
+            for(j = 1; j < NODES3; j++)
+                if(y3[j] > y3[k])
+                    k = j;
+            */
+            printf("%u - ", entradateste[784]);
+            printf("%d  ", k);
+            if(entradateste[784] == k)
+                printf("\n");
+            else
+                printf("X\n");
+           
         }
     }
 
@@ -451,6 +491,7 @@ int train(void) {
         fclose(temp); 
     }
 
+    free(sum);
     free(imgVec); free(c); free(img);
     free(v1); free(v2); free(v3); 
     free(y1); free(y2); free(y3); 
