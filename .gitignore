@@ -53,10 +53,5 @@ Mkfile.old
 dkms.conf
 
 # Outros
-ex8.c
-label8.c
-makefile
-.vscode
-teste\.c
-
 wmap
+
