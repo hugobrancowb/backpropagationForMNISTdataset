@@ -450,8 +450,6 @@ int train(void)
 
     free(sum);
     free(imgVec); free(c); free(img);
-
-    exit(EXIT_SUCCESS);
 }
 
 
