@@ -75,6 +75,7 @@ double activation(double v); /* funcao de ativacao */
 double d_activation(double v); /* derivada da funcao de ativacao */
 struct sconfig iniciarMapas(struct sconfig *c, struct s_header h); /* inicia os mapas de pesos e bias */
 double * iniciarW(int a, int b, double mapa[a][b]); /* inicia as matrizes de weights baseado nas entradas */
+double * normal (int n, unsigned char in[], double out[]); /* normaliza n imagens de entrada */
 int train(void); /* treina uma rede neural */
 void help(void); /* imprime ajuda */
 
@@ -180,6 +181,21 @@ struct sconfig iniciarMapas(struct sconfig *c, struct s_header h)
     return *c;
 }
 
+double * normal (int n, unsigned char in[], double out[])
+{
+    int i, j;
+    for(i = 0; i < n; i++)
+        for(j = 0; j <= 784; j++)
+        {
+            if(j == 784)
+                out[i*785 + j] = in[i*785 + j]*1.0;
+            else
+                out[i*785 + j] = ((in[i*785 + j]*1.0)/255);
+        }    
+
+    return out;
+}
+
 /* treina uma rede neural */
 int train(void) 
 {
@@ -230,14 +246,7 @@ int train(void)
     printf("\n");
 
     /* normalizacao dos valores de entrada */
-    for(i = 0; i < h.ni; i++)
-        for(j = 0; j <= 784; j++)
-        {
-            if(j == 784)
-                imgVec[i*785 + j] = img[i*785 + j]*1.0;
-            else
-                imgVec[i*785 + j] = ((img[i*785 + j]*1.0)/255);
-        }    
+    normal(h.ni, img, imgVec);
 
     /* inicializacao dos mapas de pesos e bias */
     iniciarMapas(c, h);    
@@ -373,13 +382,8 @@ int train(void)
     {
         if((n=fread(entradateste, sizeof(unsigned char), 785, testep)) == 785)
         {
-            for(j = 0; j <= 784; j++)
-            {
-                if(j == 784)
-                    vin[j] = entradateste[j]*1.0;
-                else
-                    vin[j] = (entradateste[j]*1.0/255);
-            }
+            /* normalizacao dos valores de entrada */
+            normal(1, entradateste, vin);
 
             /* . . . . . . . . . . . . . . */
             /* FORWARD COMPUTATION */
