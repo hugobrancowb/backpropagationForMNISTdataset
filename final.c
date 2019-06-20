@@ -431,18 +431,18 @@ int train(void)
                         sum[j] += pow(c -> y[3-1][k],2) ;
                 }
             }
-            /* 
+            
             k = 0;
             for(j = 1; j < NODES3; j++)
                 if(sum[k] > sum[j])
                     k = j;
-            */
-            
+           
+            /* 
             k = 0;
             for(j = 1; j < NODES3; j++)
                 if(c -> y[3-1][j] > c -> y[3-1][k])
                     k = j;
-           
+            */
             printf("%u - ", entradateste[784]);
             printf("%d  ", k);
             if(entradateste[784] == k)
