@@ -130,16 +130,20 @@ int main(int argc, char *argv[])
 /* funcao de ativacao */
 double activation(double v)
 {
-    double y = 1/(1 + exp(-v));
+    double y;
+    double expvalue = exp(-v);
+    y = 1/(1 + expvalue);
+
     return y;
 }
 
 /* derivada da funcao de ativacao */
 double d_activation(double v)
 {
-    //double av = activation(v);
-    //double dy = pow(av,2)*exp(-v);
-    double dy = exp(v)/(pow((exp(v) + 1), 2));
+    double dy;
+    double expvalue = exp(v);
+    dy = expvalue/(pow((expvalue + 1), 2));
+
     return dy;
 }
 
