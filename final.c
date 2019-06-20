@@ -152,7 +152,7 @@ int train(void)
 {
     /* declaracoes de variaveis locais */
     header_t h;
-    struct sconfig *c;
+    config_t *c = (config_t *)malloc(sizeof(config_t));
     int i, j, k, n;
     double erro[NODES3],
            saidaideal[NODES3]; /* vetor resultado ideal ou label do numero lido */
@@ -163,7 +163,7 @@ int train(void)
     unsigned char *entradateste;
     header_t htest;
     FILE *fp;
-    FILE *temp;
+    FILE *arquivomap;
     FILE *testep;
 
     /* codigo */
@@ -185,7 +185,6 @@ int train(void)
     printf("Lendo imagens %d x %d\n", h.lin, h.col);
 
     /* alocação de memória */
-    c = (struct sconfig *)malloc(sizeof(struct sconfig));
     sum = (double *)malloc(NODES3 * sizeof(double));
     img = (unsigned char *)malloc(sizeof(unsigned char)*((h.lin*h.col)+1)*h.ni);
     imgVec = (double *)malloc(sizeof(double)*((h.lin*h.col)+1)*h.ni);
@@ -355,7 +354,8 @@ int train(void)
     fread(&htest, sizeof(header_t), 1, testep);
     entradateste = (unsigned char *)malloc(785 * sizeof(unsigned char));
     vin = (double *)malloc(785 * sizeof(double));
-    for(i=0; i<20; i++)
+    erro[0] = 0;
+    for(i=0; i<100; i++)
     {
         if((n=fread(entradateste, sizeof(unsigned char), 785, testep)) == 785)
         {
@@ -375,7 +375,7 @@ int train(void)
             {
                 c -> v[1][j] = c -> bias[1][j];
                 for(k = 0; k < 784; k++)
-                    c -> v[1][j] += c -> wmap1[j][k] * imgVec[i*785 + k];
+                    c -> v[1][j] += c -> wmap1[j][k] * vin[k];
 
                 c -> y[1][j] = activation(c -> v[1][j]);
             }
@@ -412,55 +412,67 @@ int train(void)
                         sum[j] += pow(c -> y[3][k],2) ;
                 }
             }
-            
+            /* 
             k = 0;
             for(j = 1; j < NODES3; j++)
                 if(sum[k] > sum[j])
                     k = j;
-           
-            /* 
+            */
+            
             k = 0;
             for(j = 1; j < NODES3; j++)
                 if(c -> y[3][j] > c -> y[3][k])
                     k = j;
-            */
+           
             printf("%u - ", entradateste[784]);
             printf("%d  ", k);
             if(entradateste[784] == k)
                 printf("\n");
             else
+            {
                 printf("X\n");
-           
+                erro[0] += 1;
+            }           
         }
     }
+    erro[1] = (100.0 * erro[0])/i;
+    printf("\nErro: %.2f%%\n", erro[1]);
 
-    free(entradateste); fclose(testep);
+    free(imgVec);
+    free(img);
+    free(sum);
+    free(entradateste);
+    fclose(testep);
+    printf("\nErro: %.2f%%\n", erro[1]);
     /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
     /* save the neural network as a binary file */
     /* salvar o mapa gerado em dados binarios */
-    if((temp=fopen("wmap", "wb"))!=NULL)
+    arquivomap = fopen("wmap", "wb");
+    if(arquivomap == NULL)
+    {
+        printf("Erro abrindo arquivo binario.\n");
+        exit(EXIT_FAILURE);
+    }
+    else
     {
         for(i = 0; i < NODES1; i++)
-            fwrite(&c -> wmap1[i], 784*sizeof(double), 1, temp);
+            fwrite(&c -> wmap1[i], 784*sizeof(double), 1, arquivomap);
 
         for(i = 0; i < NODES2; i++)
-            fwrite(&c -> wmap2[i], NODES1*sizeof(double), 1, temp);
+            fwrite(&c -> wmap2[i], NODES1*sizeof(double), 1, arquivomap);
 
         for(i = 0; i < NODES3; i++)
-            fwrite(&c -> wmap3[i], NODES2*sizeof(double), 1, temp);
-
-        fclose(temp); 
+            fwrite(&c -> wmap3[i], NODES2*sizeof(double), 1, arquivomap);
     }
 
-    free(sum);
-    free(imgVec); free(c); free(img);
+    free(c);
+    fclose(arquivomap); 
 }
 
 
 int runtest(void)
 {
     printf("funcao nao implementada\n");
-    ;
 }
 
 /* ---------------------------------------------------------------------- */
