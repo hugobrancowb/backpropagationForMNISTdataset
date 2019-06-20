@@ -36,8 +36,8 @@
 /* #define NOMEARQ "t10k-images-idx3-ubyte" */
 #define NOMEARQ "train-6k-images-labels"
 
-#define NODES1 100
-#define NODES2 50
+#define NODES1 300
+#define NODES2 100
 #define NODES3 10
 #define PIXELS 28
 #define LEARN 0.1
@@ -158,8 +158,6 @@ double * iniciarW(int a, int b, double mapa[a][b])
         for(j = 0; j < b; j++)
             {
                 mapa[i][j] = (rand()%100/100.0) - 0.5;
-                if((i==0) && (j <= 2))
-                    printf("%.3lf ", mapa[i][j]);
             }
     
     printf("\n");
@@ -170,10 +168,12 @@ struct sconfig iniciarMapas(struct sconfig *c, struct s_header h)
 {
     int i, j;
 
+    /* Weights */
     iniciarW((int)NODES1, (int)h.lin*h.col, c -> wmap1);    
     iniciarW((int)NODES2, (int)NODES1, c -> wmap2);    
     iniciarW((int)NODES3, (int)NODES2, c -> wmap3);
     
+    /* Bias */
     for(j = 0; j < 3; j++)
         for(i = 0; i < NODES1; i++)
             c -> bias[j][i] = (rand()%100/100.0) - 0.5;
