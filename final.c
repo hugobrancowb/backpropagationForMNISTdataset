@@ -59,17 +59,11 @@ typedef struct sconfig
     double wmap1[NODES1][784]; /* first neuron layer - hidden */
     double wmap2[NODES2][NODES1]; /* second neuron layer - hidden */
     double wmap3[NODES3][NODES2]; /* third neuron layer - output */
-
     double v[3][NODES1]; /* v matrix as input for activation function */
     double y[3][NODES1]; /* y matrix as output for activation function */
     double delta[3][NODES1]; /* local gradient/sensitivity matrix */
     double bias[3][NODES1]; /* bias matrix */
 } config_t;
-
-typedef struct skohonen
-{
-    unsigned char entrada[785];
-} kohonen_t;
 
 /* ---------------------------------------------------------------------- */
 /* prototypes */
@@ -130,7 +124,6 @@ int main(int argc, char *argv[])
                 return EXIT_FAILURE;
         }
 
-    help();
     return EXIT_SUCCESS;
 }
 
@@ -155,37 +148,19 @@ int train(void)
 {
     /* declaracoes de variaveis locais */
     header_t h;
-    /* config_t c; */
-    struct sconfig *c = (struct sconfig*)malloc(sizeof(struct sconfig));
-    /* kohonen_t koh; */
-    FILE *fp;
+    struct sconfig *c;
+    int i, j, k, n;
     double erro[NODES3],
            saidaideal[NODES3]; /* vetor resultado ideal ou label do numero lido */
-    int i, j, k, n;
-
-    unsigned char *img;
     double *imgVec;
-
-    /* double *v1;
-    double *v2;
-    double *v3;
-    double *y1;
-    double *y2;
-    double *y3;
-    double *delta1;
-    double *delta2;
-    double *delta3;
-    double *bias1;
-    double *bias2;
-    double *bias3; */
-
-    double *sum;
-    header_t htest;
-    FILE *testep;
-    FILE *temp;
-    unsigned char *entradateste;
     double *vin;
-
+    double *sum;
+    unsigned char *img;
+    unsigned char *entradateste;
+    header_t htest;
+    FILE *fp;
+    FILE *temp;
+    FILE *testep;
 
     /* codigo */
     srand(time(NULL));
@@ -204,8 +179,12 @@ int train(void)
     printf("Num. linhas por imagem: %d\n", h.lin);
     printf("Num. colunas por imagem: %d\n", h.col);
     printf("Lendo imagens %d x %d\n", h.lin, h.col);
-    
+
+    /* alocação de memória */
+    c = (struct sconfig *)malloc(sizeof(struct sconfig));
+    sum = (double *)malloc(NODES3 * sizeof(double));
     img = (unsigned char *)malloc(sizeof(unsigned char)*((h.lin*h.col)+1)*h.ni);
+    imgVec = (double *)malloc(sizeof(double)*((h.lin*h.col)+1)*h.ni);
 
     i=0;
     while((n=fread(&img[i], sizeof(unsigned char), 1, fp)) == 1)
@@ -213,8 +192,6 @@ int train(void)
     fclose(fp);
         
     printf("\n");
-
-    imgVec = (double *)malloc(sizeof(double)*((h.lin*h.col)+1)*h.ni);
 
     /* normalizacao dos valores de entrada */
     for(i = 0; i < h.ni; i++)
@@ -224,23 +201,7 @@ int train(void)
                 imgVec[i*785 + j] = img[i*785 + j]*1.0;
             else
                 imgVec[i*785 + j] = ((img[i*785 + j]*1.0)/255);
-        }
-
-    /* variaveis */
-    /* v1 = (double *)malloc(NODES1*sizeof(double));
-    v2 = (double *)malloc(NODES2*sizeof(double));
-    v3 = (double *)malloc(NODES3*sizeof(double));
-    y1 = (double *)malloc(NODES1*sizeof(double));
-    y2 = (double *)malloc(NODES2*sizeof(double));
-    y3 = (double *)malloc(NODES3*sizeof(double));
-    delta1 = (double *)malloc(NODES1*sizeof(double));
-    delta2 = (double *)malloc(NODES2*sizeof(double));
-    delta3 = (double *)malloc(NODES3*sizeof(double));
-    bias1 = (double *)malloc(NODES1*sizeof(double));
-    bias2 = (double *)malloc(NODES2*sizeof(double));
-    bias3 = (double *)malloc(NODES3*sizeof(double)); */
-    
-    sum = (double *)malloc(NODES3 * sizeof(double));
+        }    
 
     /* inicializacao dos mapas de pesos e bias */
     for(i = 0; i < NODES1; i++)
@@ -265,10 +226,10 @@ int train(void)
         c -> bias[3][i] = (rand()%100/100.0) - 0.5;
 
     /* 'i': imagem atual -- numero total de imagens para treinar a rede */
-    /* for(i = 0; i < h.ni; i++) */
     for(i = 0; i < h.ni; i++)
     {
         c -> eta = LEARN*h.ni/(i+h.ni); /* atualização na learning rate */
+
         /* . . . . . . . . . . . . . . */
         /* FORWARD COMPUTATION */
 
@@ -310,27 +271,11 @@ int train(void)
         /* . . . . . . . . . . . . . . */
         /* BACKWARD COMPUTATION */
 
-        /* normalizar saída */
-        /* double max;
-        for(j = 0; j < NODES3; j++)
-        {
-            if(j == 0)
-                max = c -> y[3][j];
-            else
-            {
-                if (c -> y[3][j] > max)
-                    max = c -> y[3][j];
-            }
-        }
-        for(j = 0; j < NODES3; j++)
-            c -> y[3][j] = c -> y[3][j]/max; */
-
         /* calculo do erro */
         saidaideal[(int)imgVec[i*785 + 784]] = 1;
         for(j = 0; j < NODES3; j++)
             erro[j] = c -> y[3][j] - saidaideal[j];
-        
-        /* ........................ */
+
         /* atualização das matrizes */
         
         /* delta do terceiro layer */
@@ -394,7 +339,7 @@ int train(void)
         }
     }
 
-    /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
+    /* . . . . . . . . . . . . . */
     /* teste da rede */
 
     if((testep=fopen("test-4k-images-labels", "rb"))==NULL)
