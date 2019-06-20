@@ -75,7 +75,7 @@ double activation(double v); /* funcao de ativacao */
 double d_activation(double v); /* derivada da funcao de ativacao */
 struct sconfig iniciarMapas(struct sconfig *c, struct s_header h); /* inicia os mapas de pesos e bias */
 double * iniciarW(int a, int b, double mapa[a][b]); /* inicia as matrizes de weights baseado nas entradas */
-double * normal (int n, unsigned char in[], double out[]); /* normaliza n imagens de entrada */
+double * normal (int inicio, unsigned char in[], double out[]); /* normaliza n imagens de entrada */
 int train(void); /* treina uma rede neural */
 void help(void); /* imprime ajuda */
 
@@ -181,16 +181,16 @@ struct sconfig iniciarMapas(struct sconfig *c, struct s_header h)
     return *c;
 }
 
-double * normal (int n, unsigned char in[], double out[])
+double * normal (int inicio, unsigned char in[], double out[785])
 {
     int i, j;
-    for(i = 0; i < n; i++)
+    for(i = inicio; i < inicio+1; i++)
         for(j = 0; j <= 784; j++)
         {
             if(j == 784)
-                out[i*785 + j] = in[i*785 + j]*1.0;
+                out[j] = in[i*785 + j]*1.0;
             else
-                out[i*785 + j] = ((in[i*785 + j]*1.0)/255);
+                out[j] = ((in[i*785 + j]*1.0)/255);
         }    
 
     return out;
@@ -236,7 +236,7 @@ int train(void)
     /* alocação de memória */
     sum = (double *)malloc(NODES3 * sizeof(double));
     img = (unsigned char *)malloc(sizeof(unsigned char)*((h.lin*h.col)+1)*h.ni);
-    imgVec = (double *)malloc(sizeof(double)*((h.lin*h.col)+1)*h.ni);
+    imgVec = (double *)malloc(sizeof(double)*((h.lin*h.col)+1));
 
     i=0;
     while((n=fread(&img[i], sizeof(unsigned char), 1, fp)) == 1)
@@ -244,9 +244,6 @@ int train(void)
     fclose(fp);
         
     printf("\n");
-
-    /* normalizacao dos valores de entrada */
-    normal(h.ni, img, imgVec);
 
     /* inicializacao dos mapas de pesos e bias */
     iniciarMapas(c, h);    
@@ -256,15 +253,19 @@ int train(void)
     {
         c -> eta = LEARN*h.ni/(i+h.ni); /* atualização na learning rate */
 
+        /* normalizacao dos valores de entrada */
+        normal(i, img, imgVec);
+
         /* . . . . . . . . . . . . . . */
         /* FORWARD COMPUTATION */
+        //fowardComputation(c);
 
         /* primeiro layer */
         for(j = 0; j < NODES1; j++)
         {
             c -> v[1-1][j] = c -> bias[1-1][j];
             for(k = 0; k < 784; k++)
-                c -> v[1-1][j] += c -> wmap1[j][k] * imgVec[i*785 + k];
+                c -> v[1-1][j] += c -> wmap1[j][k] * imgVec[k];
 
             c -> y[1-1][j] = activation(c -> v[1-1][j]);
         }
@@ -287,18 +288,18 @@ int train(void)
                 c -> v[3-1][j] += c -> wmap3[j][k] * c -> y[2-1][k];
 
             c -> y[3-1][j] = activation(c -> v[3-1][j]); /* a saida v3 eh o vetor resultado que nos diz o numero que a rede supoe que seja */
-            printf("%1.2lf ", c -> y[3-1][j]);
-
-            saidaideal[j] = 0;
-            erro[j] = 0;
+            if(DEBUG) printf("%1.2lf ", c -> y[3-1][j]);
         }
-        printf("\n");
+        if(DEBUG) printf("\n");
 
         /* . . . . . . . . . . . . . . */
         /* BACKWARD COMPUTATION */
 
         /* calculo do erro */
-        saidaideal[(int)imgVec[i*785 + 784]] = 1;
+        for(j = 0; j < NODES3; j++)
+            saidaideal[j] = 0;
+
+        saidaideal[(int)imgVec[784]] = 1;
         for(j = 0; j < NODES3; j++)
             erro[j] = c -> y[3-1][j] - saidaideal[j];
 
@@ -383,7 +384,7 @@ int train(void)
         if((n=fread(entradateste, sizeof(unsigned char), 785, testep)) == 785)
         {
             /* normalizacao dos valores de entrada */
-            normal(1, entradateste, vin);
+            normal(0, entradateste, vin);
 
             /* . . . . . . . . . . . . . . */
             /* FORWARD COMPUTATION */
