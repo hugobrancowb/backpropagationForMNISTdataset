@@ -73,6 +73,8 @@ void copyr(void); /* print version and copyright information */
 
 double activation(double v); /* funcao de ativacao */
 double d_activation(double v); /* derivada da funcao de ativacao */
+struct sconfig iniciarMapas(struct sconfig *c, struct s_header h); /* inicia os mapas de pesos e bias */
+double * iniciarW(int a, int b, double mapa[a][b]); /* inicia as matrizes de weights baseado nas entradas */
 int train(void); /* treina uma rede neural */
 void help(void); /* imprime ajuda */
 
@@ -147,6 +149,37 @@ double d_activation(double v)
     return dy;
 }
 
+double * iniciarW(int a, int b, double mapa[a][b])
+{
+    int i, j;
+
+    for(i = 0; i < a; i++)
+        for(j = 0; j < b; j++)
+            {
+                mapa[i][j] = (rand()%100/100.0) - 0.5;
+                if((i==0) && (j <= 2))
+                    printf("%.3lf ", mapa[i][j]);
+            }
+    
+    printf("\n");
+    return *mapa;
+}
+
+struct sconfig iniciarMapas(struct sconfig *c, struct s_header h)
+{
+    int i, j;
+
+    iniciarW((int)NODES1, (int)h.lin*h.col, c -> wmap1);    
+    iniciarW((int)NODES2, (int)NODES1, c -> wmap2);    
+    iniciarW((int)NODES3, (int)NODES2, c -> wmap3);
+    
+    for(j = 0; j < 3; j++)
+        for(i = 0; i < NODES1; i++)
+            c -> bias[j][i] = (rand()%100/100.0) - 0.5;
+    
+    return *c;
+}
+
 /* treina uma rede neural */
 int train(void) 
 {
@@ -207,26 +240,7 @@ int train(void)
         }    
 
     /* inicializacao dos mapas de pesos e bias */
-    for(i = 0; i < NODES1; i++)
-        for(j = 0; j < h.lin*h.col; j++)
-            c -> wmap1[i][j] = (rand()%100/100.0) - 0.5;
-
-    for(i = 0; i < NODES2; i++)
-        for(j = 0; j < NODES1; j++)
-            c -> wmap2[i][j] = (rand()%100/100.0) - 0.5;
-
-    for(i = 0; i < NODES3; i++)
-        for(j = 0; j < NODES2; j++)
-            c -> wmap3[i][j] = (rand()%100/100.0) - 0.5;
-    
-    for(i = 0; i < NODES1; i++)
-        c -> bias[1][i] = (rand()%100/100.0) - 0.5;
-
-    for(i = 0; i < NODES2; i++)
-        c -> bias[2][i] = (rand()%100/100.0) - 0.5;
-
-    for(i = 0; i < NODES3; i++)
-        c -> bias[3][i] = (rand()%100/100.0) - 0.5;
+    iniciarMapas(c, h);    
 
     /* 'i': imagem atual -- numero total de imagens para treinar a rede */
     for(i = 0; i < h.ni; i++)
