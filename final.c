@@ -152,7 +152,7 @@ int train(void)
 {
     /* declaracoes de variaveis locais */
     header_t h;
-    struct sconfig *c;
+    config_t *c = (config_t *)malloc(sizeof(config_t));
     int i, j, k, n;
     double erro[NODES3],
            saidaideal[NODES3]; /* vetor resultado ideal ou label do numero lido */
@@ -163,7 +163,7 @@ int train(void)
     unsigned char *entradateste;
     header_t htest;
     FILE *fp;
-    FILE *temp;
+    FILE *arquivomap;
     FILE *testep;
 
     /* codigo */
@@ -185,7 +185,6 @@ int train(void)
     printf("Lendo imagens %d x %d\n", h.lin, h.col);
 
     /* alocação de memória */
-    c = (struct sconfig *)malloc(sizeof(struct sconfig));
     sum = (double *)malloc(NODES3 * sizeof(double));
     img = (unsigned char *)malloc(sizeof(unsigned char)*((h.lin*h.col)+1)*h.ni);
     imgVec = (double *)malloc(sizeof(double)*((h.lin*h.col)+1)*h.ni);
@@ -434,26 +433,29 @@ int train(void)
         }
     }
 
-    free(entradateste); fclose(testep);
     /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
     /* save the neural network as a binary file */
     /* salvar o mapa gerado em dados binarios */
-    if((temp=fopen("wmap", "wb"))!=NULL)
+    arquivomap = fopen("wmap", "wb");
+    if(arquivomap != NULL)
     {
         for(i = 0; i < NODES1; i++)
-            fwrite(&c -> wmap1[i], 784*sizeof(double), 1, temp);
+            fwrite(&c -> wmap1[i], 784*sizeof(double), 1, arquivomap);
 
         for(i = 0; i < NODES2; i++)
-            fwrite(&c -> wmap2[i], NODES1*sizeof(double), 1, temp);
+            fwrite(&c -> wmap2[i], NODES1*sizeof(double), 1, arquivomap);
 
         for(i = 0; i < NODES3; i++)
-            fwrite(&c -> wmap3[i], NODES2*sizeof(double), 1, temp);
-
-        fclose(temp); 
+            fwrite(&c -> wmap3[i], NODES2*sizeof(double), 1, arquivomap);
     }
 
+    free(entradateste);
+    free(imgVec);
+    free(img);
+    free(c);
     free(sum);
-    free(imgVec); free(c); free(img);
+    fclose(testep);
+    fclose(arquivomap); 
 }
 
 
