@@ -59,6 +59,11 @@ typedef struct sconfig
     double wmap1[NODES1][784]; /* first neuron layer - hidden */
     double wmap2[NODES2][NODES1]; /* second neuron layer - hidden */
     double wmap3[NODES3][NODES2]; /* third neuron layer - output */
+
+    double v[3][NODES1]; /* v matrix as input for activation function */
+    double y[3][NODES1]; /* y matrix as output for activation function */
+    double delta[3][NODES1]; /* local gradient/sensitivity matrix */
+    double bias[3][NODES1]; /* bias matrix */
 } config_t;
 
 typedef struct skohonen
@@ -161,7 +166,7 @@ int train(void)
     unsigned char *img;
     double *imgVec;
 
-    double *v1;
+    /* double *v1;
     double *v2;
     double *v3;
     double *y1;
@@ -172,7 +177,7 @@ int train(void)
     double *delta3;
     double *bias1;
     double *bias2;
-    double *bias3;
+    double *bias3; */
 
     double *sum;
     header_t htest;
@@ -222,7 +227,7 @@ int train(void)
         }
 
     /* variaveis */
-    v1 = (double *)malloc(NODES1*sizeof(double));
+    /* v1 = (double *)malloc(NODES1*sizeof(double));
     v2 = (double *)malloc(NODES2*sizeof(double));
     v3 = (double *)malloc(NODES3*sizeof(double));
     y1 = (double *)malloc(NODES1*sizeof(double));
@@ -233,7 +238,7 @@ int train(void)
     delta3 = (double *)malloc(NODES3*sizeof(double));
     bias1 = (double *)malloc(NODES1*sizeof(double));
     bias2 = (double *)malloc(NODES2*sizeof(double));
-    bias3 = (double *)malloc(NODES3*sizeof(double));
+    bias3 = (double *)malloc(NODES3*sizeof(double)); */
     
     sum = (double *)malloc(NODES3 * sizeof(double));
 
@@ -251,13 +256,13 @@ int train(void)
             c -> wmap3[i][j] = (rand()%100/100.0) - 0.5;
     
     for(i = 0; i < NODES1; i++)
-        bias1[i] = (rand()%100/100.0) - 0.5;
+        c -> bias[1][i] = (rand()%100/100.0) - 0.5;
 
     for(i = 0; i < NODES2; i++)
-        bias2[i] = (rand()%100/100.0) - 0.5;
+        c -> bias[2][i] = (rand()%100/100.0) - 0.5;
 
     for(i = 0; i < NODES3; i++)
-        bias3[i] = (rand()%100/100.0) - 0.5;
+        c -> bias[3][i] = (rand()%100/100.0) - 0.5;
 
     /* 'i': imagem atual -- numero total de imagens para treinar a rede */
     /* for(i = 0; i < h.ni; i++) */
@@ -270,32 +275,32 @@ int train(void)
         /* primeiro layer */
         for(j = 0; j < NODES1; j++)
         {
-            v1[j] = bias1[j];
+            c -> v[1][j] = c -> bias[1][j];
             for(k = 0; k < 784; k++)
-                v1[j] += c -> wmap1[j][k] * imgVec[i*785 + k];
+                c -> v[1][j] += c -> wmap1[j][k] * imgVec[i*785 + k];
 
-            y1[j] = activation(v1[j]);
+            c -> y[1][j] = activation(c -> v[1][j]);
         }
 
         /* segundo layer */
         for(j = 0; j < NODES2; j++)
         {
-            v2[j] = bias2[j];
+            c -> v[2][j] = c -> bias[2][j];
             for(k = 0; k < NODES1; k++)
-                v2[j] += c -> wmap2[j][k] * y1[k];
+                c -> v[2][j] += c -> wmap2[j][k] * c -> y[1][k];
 
-            y2[j] = activation(v2[j]);
+            c -> y[2][j] = activation(c -> v[2][j]);
         }
 
         /* terceiro layer */
         for(j = 0; j < NODES3; j++)
         {
-            v3[j] = bias3[j];
+            c -> v[3][j] = c -> bias[3][j];
             for(k = 0; k < NODES2; k++)
-                v3[j] += c -> wmap3[j][k] * y2[k];
+                c -> v[3][j] += c -> wmap3[j][k] * c -> y[2][k];
 
-            y3[j] = activation(v3[j]); /* a saida v3 eh o vetor resultado que nos diz o numero que a rede supoe que seja */
-            printf("%1.2lf ", y3[j]);
+            c -> y[3][j] = activation(c -> v[3][j]); /* a saida v3 eh o vetor resultado que nos diz o numero que a rede supoe que seja */
+            printf("%1.2lf ", c -> y[3][j]);
 
             saidaideal[j] = 0;
             erro[j] = 0;
@@ -310,82 +315,82 @@ int train(void)
         for(j = 0; j < NODES3; j++)
         {
             if(j == 0)
-                max = y3[j];
+                max = c -> y[3][j];
             else
             {
-                if (y3[j] > max)
-                    max = y3[j];
+                if (c -> y[3][j] > max)
+                    max = c -> y[3][j];
             }
         }
         for(j = 0; j < NODES3; j++)
-            y3[j] = y3[j]/max; */
+            c -> y[3][j] = c -> y[3][j]/max; */
 
         /* calculo do erro */
         saidaideal[(int)imgVec[i*785 + 784]] = 1;
         for(j = 0; j < NODES3; j++)
-            erro[j] = y3[j] - saidaideal[j];
+            erro[j] = c -> y[3][j] - saidaideal[j];
         
         /* ........................ */
         /* atualização das matrizes */
         
         /* delta do terceiro layer */
         for(j = 0; j < NODES3; j++)
-            delta3[j] = (2)*erro[j] * d_activation(v3[j]);
+            c -> delta[3][j] = (2)*erro[j] * d_activation(c -> v[3][j]);
 
         /* terceiro layer */
         for(j = 0; j < NODES3; j++)
         {
             for(k = 0; k < NODES2; k++)
             {
-                c -> wmap3[j][k] -= (c -> eta * delta3[j] * y2[k]);
+                c -> wmap3[j][k] -= (c -> eta * c -> delta[3][j] * c -> y[2][k]);
             }
-            bias3[j] -= (c -> eta * delta3[j]);
+            c -> bias[3][j] -= (c -> eta * c -> delta[3][j]);
         }
 
         /* delta do segundo layer */
         for(j = 0; j < NODES2; j++)
-            delta2[j] = 0;
+            c -> delta[2][j] = 0;
 
         for(j = 0; j < NODES3; j++)
         {
             for(k = 0; k < NODES2; k++)
-                delta2[k] += delta3[k] * c -> wmap3[j][k];
+                c -> delta[2][k] += c -> delta[3][k] * c -> wmap3[j][k];
         }
         
         for(j = 0; j < NODES2; j++)
-            delta2[j] = delta2[j] * d_activation(v2[j]);
+            c -> delta[2][j] = c -> delta[2][j] * d_activation(c -> v[2][j]);
 
         /* segundo layer */
         for(j = 0; j < NODES2; j++)
         {
             for(k = 0; k < NODES1; k++)
                 {
-                    c -> wmap2[j][k] -= (c -> eta * delta2[j] * y1[k]);
+                    c -> wmap2[j][k] -= (c -> eta * c -> delta[2][j] * c -> y[1][k]);
                 }
-            bias2[j] -= (c -> eta * delta2[j]);
+            c -> bias[2][j] -= (c -> eta * c -> delta[2][j]);
         }
 
         /* delta do primeiro layer */
         for(j = 0; j < NODES1; j++)
-            delta1[j] = 0;
+            c -> delta[1][j] = 0;
 
         for(j = 0; j < NODES2; j++)
         {
             for(k = 0; k < NODES1; k++)
-                delta1[k] += delta2[k] * c -> wmap2[j][k];
+                c -> delta[1][k] += c -> delta[2][k] * c -> wmap2[j][k];
         }
         
         for(j = 0; j < NODES1; j++)
-            delta1[j] = delta1[j] * d_activation(v1[j]);
+            c -> delta[1][j] = c -> delta[1][j] * d_activation(c -> v[1][j]);
 
         /* primeiro layer */
         for(j = 0; j < NODES1; j++)
         {
             for(k = 0; k < 784; k++)
             {
-                c -> wmap1[j][k] -= (c -> eta * delta1[j] * imgVec[k]);
+                c -> wmap1[j][k] -= (c -> eta * c -> delta[1][j] * imgVec[k]);
             }
-            bias1[j] -= (c -> eta * delta1[j]);
+            c -> bias[1][j] -= (c -> eta * c -> delta[1][j]);
         }
     }
 
@@ -419,31 +424,31 @@ int train(void)
             /* primeiro layer */
             for(j = 0; j < NODES1; j++)
             {
-                v1[j] = bias1[j];
+                c -> v[1][j] = c -> bias[1][j];
                 for(k = 0; k < 784; k++)
-                    v1[j] += c -> wmap1[j][k] * imgVec[i*785 + k];
+                    c -> v[1][j] += c -> wmap1[j][k] * imgVec[i*785 + k];
 
-                y1[j] = activation(v1[j]);
+                c -> y[1][j] = activation(c -> v[1][j]);
             }
 
             /* segundo layer */
             for(j = 0; j < NODES2; j++)
             {
-                v2[j] = bias2[j];
+                c -> v[2][j] = c -> bias[2][j];
                 for(k = 0; k < NODES1; k++)
-                    v2[j] += c -> wmap2[j][k] * y1[k];
+                    c -> v[2][j] += c -> wmap2[j][k] * c -> y[1][k];
 
-                y2[j] = activation(v2[j]);
+                c -> y[2][j] = activation(c -> v[2][j]);
             }
 
             /* terceiro layer */
             for(j = 0; j < NODES3; j++)
             {
-                v3[j] = bias3[j];
+                c -> v[3][j] = c -> bias[3][j];
                 for(k = 0; k < NODES2; k++)
-                    v3[j] += c -> wmap3[j][k] * y2[k];
+                    c -> v[3][j] += c -> wmap3[j][k] * c -> y[2][k];
 
-                y3[j] = activation(v3[j]);
+                c -> y[3][j] = activation(c -> v[3][j]);
             }
             
             /* Verificacao */            
@@ -453,9 +458,9 @@ int train(void)
                 for(k = 0; k < NODES3; k++)
                 {   
                     if(k == j)
-                        sum[j] += pow((y3[k]-1),2) ;
+                        sum[j] += pow((c -> y[3][k]-1),2) ;
                     else
-                        sum[j] += pow(y3[k],2) ;
+                        sum[j] += pow(c -> y[3][k],2) ;
                 }
             }
             
@@ -467,7 +472,7 @@ int train(void)
             /* 
             k = 0;
             for(j = 1; j < NODES3; j++)
-                if(y3[j] > y3[k])
+                if(c -> y[3][j] > c -> y[3][k])
                     k = j;
             */
             printf("%u - ", entradateste[784]);
@@ -500,9 +505,6 @@ int train(void)
 
     free(sum);
     free(imgVec); free(c); free(img);
-    free(v1); free(v2); free(v3); 
-    free(y1); free(y2); free(y3); 
-    free(delta1); free(delta2); free(delta3);
 
     exit(EXIT_SUCCESS);
 }
