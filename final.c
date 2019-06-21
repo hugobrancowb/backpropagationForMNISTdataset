@@ -78,6 +78,7 @@ double * iniciarW(int a, int b, double mapa[a][b]); /* inicia as matrizes de wei
 struct sconfig normal (struct sconfig *c, int inicio, unsigned char in[]); /* normaliza n imagens de entrada */
 struct sconfig fowardComputation(struct sconfig *c); /* executa os calculos das matrizes para o sentido direto da rede */
 struct sconfig backwardComputation(struct sconfig *c); /* executa os calculos das matrizes para o sentido inverso da rede e atualiza suas matrizes */
+struct sconfig signalFlow(struct sconfig *c, int a, int nodesPrev, int nodes, double wmap[nodes][nodesPrev]);
 int train(void); /* treina uma rede neural */
 void help(void); /* imprime ajuda */
 
@@ -195,39 +196,27 @@ struct sconfig normal (struct sconfig *c, int inicio, unsigned char in[])
     return *c;
 }
 
+struct sconfig signalFlow(struct sconfig *c, int a, int nodesPrev, int nodes, double wmap[nodes][nodesPrev])
+{
+    int i, j;
+
+    for(i = 0; i < nodes; i++)
+    {
+        c -> v[a][i] = c -> bias[a][i];
+        for(j = 0; j < nodesPrev; j++)
+            c -> v[a][i] += wmap[i][j] * c -> y[a][j];
+
+        c -> y[a+1][i] = activation(c -> v[a][i]);
+    }
+
+    return *c;
+}
+
 struct sconfig fowardComputation(struct sconfig *c)
 {
-    int j, k;
-
-    /* primeiro layer */
-    for(j = 0; j < NODES1; j++)
-    {
-        c -> v[0][j] = c -> bias[0][j];
-        for(k = 0; k < 784; k++)
-            c -> v[0][j] += c -> wmap1[j][k] * c -> y[0][k];
-
-        c -> y[1][j] = activation(c -> v[0][j]);
-    }
-
-    /* segundo layer */
-    for(j = 0; j < NODES2; j++)
-    {
-        c -> v[1][j] = c -> bias[1][j];
-        for(k = 0; k < NODES1; k++)
-            c -> v[1][j] += c -> wmap2[j][k] * c -> y[1][k];
-
-        c -> y[2][j] = activation(c -> v[1][j]);
-    }
-
-    /* terceiro layer */
-    for(j = 0; j < NODES3; j++)
-    {
-        c -> v[2][j] = c -> bias[2][j];
-        for(k = 0; k < NODES2; k++)
-            c -> v[2][j] += c -> wmap3[j][k] * c -> y[2][k];
-
-        c -> y[3][j] = activation(c -> v[2][j]); /* a saida v3 eh o vetor resultado que nos diz o numero que a rede supoe que seja */
-    }
+    signalFlow(c, 0, 784, NODES1, c -> wmap1);
+    signalFlow(c, 1, NODES1, NODES2, c -> wmap2);
+    signalFlow(c, 2, NODES2, NODES3, c -> wmap3);
 
     return *c;
 }
