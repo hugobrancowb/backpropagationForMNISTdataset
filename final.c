@@ -80,6 +80,7 @@ struct sconfig fowardComputation(struct sconfig *c); /* executa os calculos das 
 struct sconfig backwardComputation(struct sconfig *c); /* executa os calculos das matrizes para o sentido inverso da rede e atualiza suas matrizes */
 struct sconfig signalFlow(struct sconfig *c, int a, int nodesPrev, int nodes, double wmap[nodes][nodesPrev]); /* realiza os cálculos da fowardComputation para cada camada. fowardComputation apenas chama signnalFlow três vezes, uam vez para cada camada de perceptrons */
 struct sconfig backWeights(struct sconfig *c, int a, int nodesPrev, int nodes, double wmap[nodes][nodesPrev]); /* atualiza as matrizes de pesos baseado nos novos valores de delta */
+struct sconfig deltaBack(struct sconfig *c, int a, int nodesPrev, int nodes, double wmap[nodes][nodesPrev]); /* calcula os novos vetores delta baseado no erro calculado */
 int train(void); /* treina uma rede neural */
 void help(void); /* imprime ajuda */
 
@@ -237,9 +238,31 @@ struct sconfig fowardComputation(struct sconfig *c)
     return *c;
 }
 
+struct sconfig deltaBack(struct sconfig *c, int a, int nodesPrev, int nodes, double wmap[nodes][nodesPrev])
+{
+    int i, j;
+
+    for(i = 0; i < NODES3; i++)
+    {
+        for(j = 0; j < NODES2; j++)
+        {
+            if((j == 0) && (i == 0))
+                c -> delta[a][j] = c -> delta[a+1][j] * wmap[i][j];
+            else
+                c -> delta[a][j] += c -> delta[a+1][j] * wmap[i][j];
+            
+        }
+        
+        if(i == NODES3 - 1)
+            c -> delta[a][i] = c -> delta[a][i] * d_activation(c -> v[a][i]);
+    }
+
+    return *c;
+}
+
 struct sconfig backwardComputation(struct sconfig *c)
 {
-    int j, k;
+    int j;
     double erro[NODES3],
            saidaideal[NODES3]; /* vetor resultado ideal ou label do numero lido */
     
@@ -255,45 +278,18 @@ struct sconfig backwardComputation(struct sconfig *c)
     }
 
     /* atualização das matrizes */
-    /* delta do terceiro layer */
+    /* delta e peso do terceiro layer */
     for(j = 0; j < NODES3; j++)
-        c -> delta[3-1][j] = (2)*erro[j] * d_activation(c -> v[3-1][j]);
-
-    /* matriz de pesos do terceiro layer */
+        c -> delta[2][j] = (2)*erro[j] * d_activation(c -> v[2][j]);
+        
     backWeights(c, 2, NODES2, NODES3, c -> wmap3);
-
-    /*........................*/
-    /* delta do segundo layer */
-    for(j = 0; j < NODES2; j++)
-        c -> delta[2-1][j] = 0;
-
-    for(j = 0; j < NODES3; j++)
-    {
-        for(k = 0; k < NODES2; k++)
-            c -> delta[2-1][k] += c -> delta[3-1][k] * c -> wmap3[j][k];
-    }
     
-    for(j = 0; j < NODES2; j++)
-        c -> delta[2-1][j] = c -> delta[2-1][j] * d_activation(c -> v[2-1][j]);
-
-    /* matriz de pesos do segundo layer */
+    /* delta e peso do segundo layer */
+    deltaBack(c, 1, NODES2, NODES3, c -> wmap3);
     backWeights(c, 1, NODES1, NODES2, c -> wmap2);
 
-    /*.........................*/
-    /* delta do primeiro layer */
-    for(j = 0; j < NODES1; j++)
-        c -> delta[1-1][j] = 0;
-
-    for(j = 0; j < NODES2; j++)
-    {
-        for(k = 0; k < NODES1; k++)
-            c -> delta[1-1][k] += c -> delta[2-1][k] * c -> wmap2[j][k];
-    }
-    
-    for(j = 0; j < NODES1; j++)
-        c -> delta[1-1][j] = c -> delta[1-1][j] * d_activation(c -> v[1-1][j]);
-
-    /* matriz de pesos do primeiro layer */
+    /* delta e peso do primeiro layer */
+    deltaBack(c, 0, NODES1, NODES2, c -> wmap2);
     backWeights(c, 0, 784, NODES1, c -> wmap1);
 
     return *c;
@@ -412,9 +408,9 @@ int train(void)
                     k = j;
             */
            
-            printf("%u - ", entradateste[784]);
+            printf("%.0lf - ", c -> y[0][784]);
             printf("%d  ", k);
-            if(entradateste[784] == k)
+            if(c -> y[0][784] == k)
                 printf("\n");
             else
             {
