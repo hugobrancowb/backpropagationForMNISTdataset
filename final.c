@@ -60,7 +60,7 @@ typedef struct sconfig
     double wmap2[NODES2][NODES1]; /* second neuron layer - hidden */
     double wmap3[NODES3][NODES2]; /* third neuron layer - output */
     double v[3][NODES1]; /* v matrix as input for activation function */
-    double y[3][NODES1]; /* y matrix as output for activation function */
+    double y[4][785]; /* y matrix as output for activation function */
     double delta[3][NODES1]; /* local gradient/sensitivity matrix */
     double bias[3][NODES1]; /* bias matrix */
 } config_t;
@@ -75,9 +75,9 @@ double activation(double v); /* funcao de ativacao */
 double d_activation(double v); /* derivada da funcao de ativacao */
 struct sconfig iniciarMapas(struct sconfig *c, struct s_header h); /* inicia os mapas de pesos e bias */
 double * iniciarW(int a, int b, double mapa[a][b]); /* inicia as matrizes de weights baseado nas entradas */
-double * normal (int inicio, unsigned char in[], double out[785]); /* normaliza n imagens de entrada */
-struct sconfig fowardComputation(struct sconfig *c, double imgVec[785]); /* executa os calculos das matrizes para o sentido direto da rede */
-struct sconfig backwardComputation(struct sconfig *c, double imgVec[785]); /* executa os calculos das matrizes para o sentido inverso da rede e atualiza suas matrizes */
+struct sconfig normal (struct sconfig *c, int inicio, unsigned char in[]); /* normaliza n imagens de entrada */
+struct sconfig fowardComputation(struct sconfig *c); /* executa os calculos das matrizes para o sentido direto da rede */
+struct sconfig backwardComputation(struct sconfig *c); /* executa os calculos das matrizes para o sentido inverso da rede e atualiza suas matrizes */
 int train(void); /* treina uma rede neural */
 void help(void); /* imprime ajuda */
 
@@ -180,59 +180,59 @@ struct sconfig iniciarMapas(struct sconfig *c, struct s_header h)
     return *c;
 }
 
-double * normal (int inicio, unsigned char in[], double out[785])
+struct sconfig normal (struct sconfig *c, int inicio, unsigned char in[])
 {
     int i, j;
     for(i = inicio; i < inicio+1; i++)
         for(j = 0; j <= 784; j++)
         {
             if(j == 784)
-                out[j] = in[i*785 + j]*1.0;
+                c -> y[0][j] = in[i*785 + j]*1.0;
             else
-                out[j] = ((in[i*785 + j]*1.0)/255);
+                c -> y[0][j] = ((in[i*785 + j]*1.0)/255);
         }    
 
-    return out;
+    return *c;
 }
 
-struct sconfig fowardComputation(struct sconfig *c, double imgVec[785])
+struct sconfig fowardComputation(struct sconfig *c)
 {
     int j, k;
 
     /* primeiro layer */
     for(j = 0; j < NODES1; j++)
     {
-        c -> v[1-1][j] = c -> bias[1-1][j];
+        c -> v[0][j] = c -> bias[0][j];
         for(k = 0; k < 784; k++)
-            c -> v[1-1][j] += c -> wmap1[j][k] * imgVec[k];
+            c -> v[0][j] += c -> wmap1[j][k] * c -> y[0][k];
 
-        c -> y[1-1][j] = activation(c -> v[1-1][j]);
+        c -> y[1][j] = activation(c -> v[0][j]);
     }
 
     /* segundo layer */
     for(j = 0; j < NODES2; j++)
     {
-        c -> v[2-1][j] = c -> bias[2-1][j];
+        c -> v[1][j] = c -> bias[1][j];
         for(k = 0; k < NODES1; k++)
-            c -> v[2-1][j] += c -> wmap2[j][k] * c -> y[1-1][k];
+            c -> v[1][j] += c -> wmap2[j][k] * c -> y[1][k];
 
-        c -> y[2-1][j] = activation(c -> v[2-1][j]);
+        c -> y[2][j] = activation(c -> v[1][j]);
     }
 
     /* terceiro layer */
     for(j = 0; j < NODES3; j++)
     {
-        c -> v[3-1][j] = c -> bias[3-1][j];
+        c -> v[2][j] = c -> bias[2][j];
         for(k = 0; k < NODES2; k++)
-            c -> v[3-1][j] += c -> wmap3[j][k] * c -> y[2-1][k];
+            c -> v[2][j] += c -> wmap3[j][k] * c -> y[2][k];
 
-        c -> y[3-1][j] = activation(c -> v[3-1][j]); /* a saida v3 eh o vetor resultado que nos diz o numero que a rede supoe que seja */
+        c -> y[3][j] = activation(c -> v[2][j]); /* a saida v3 eh o vetor resultado que nos diz o numero que a rede supoe que seja */
     }
 
     return *c;
 }
 
-struct sconfig backwardComputation(struct sconfig *c, double imgVec[785])
+struct sconfig backwardComputation(struct sconfig *c)
 {
     int j, k;
     double erro[NODES3],
@@ -242,12 +242,11 @@ struct sconfig backwardComputation(struct sconfig *c, double imgVec[785])
     for(j = 0; j < NODES3; j++)
         saidaideal[j] = 0;
 
-    saidaideal[(int)imgVec[784]] = 1;
+    saidaideal[(int)c -> y[0][784]] = 1;
     for(j = 0; j < NODES3; j++)
-        erro[j] = c -> y[3-1][j] - saidaideal[j];
+        erro[j] = c -> y[3][j] - saidaideal[j];
 
-    /* atualização das matrizes */
-    
+    /* atualização das matrizes */    
     /* delta do terceiro layer */
     for(j = 0; j < NODES3; j++)
         c -> delta[3-1][j] = (2)*erro[j] * d_activation(c -> v[3-1][j]);
@@ -257,7 +256,7 @@ struct sconfig backwardComputation(struct sconfig *c, double imgVec[785])
     {
         for(k = 0; k < NODES2; k++)
         {
-            c -> wmap3[j][k] -= (c -> eta * c -> delta[3-1][j] * c -> y[2-1][k]);
+            c -> wmap3[j][k] -= (c -> eta * c -> delta[3-1][j] * c -> y[2][k]);
         }
         c -> bias[3-1][j] -= (c -> eta * c -> delta[3-1][j]);
     }
@@ -280,7 +279,7 @@ struct sconfig backwardComputation(struct sconfig *c, double imgVec[785])
     {
         for(k = 0; k < NODES1; k++)
             {
-                c -> wmap2[j][k] -= (c -> eta * c -> delta[2-1][j] * c -> y[1-1][k]);
+                c -> wmap2[j][k] -= (c -> eta * c -> delta[2-1][j] * c -> y[1][k]);
             }
         c -> bias[2-1][j] -= (c -> eta * c -> delta[2-1][j]);
     }
@@ -303,7 +302,7 @@ struct sconfig backwardComputation(struct sconfig *c, double imgVec[785])
     {
         for(k = 0; k < 784; k++)
         {
-            c -> wmap1[j][k] -= (c -> eta * c -> delta[1-1][j] * imgVec[k]);
+            c -> wmap1[j][k] -= (c -> eta * c -> delta[1-1][j] * c -> y[0][k]);
         }
         c -> bias[1-1][j] -= (c -> eta * c -> delta[1-1][j]);
     }
@@ -318,8 +317,6 @@ int train(void)
     header_t h;
     config_t *c = (config_t *)malloc(sizeof(config_t));
     int i, j, k, n;
-    double *imgVec;
-    double *vin;
     double *sum;
     unsigned char *img;
     unsigned char *entradateste;
@@ -349,7 +346,6 @@ int train(void)
     /* alocação de memória */
     sum = (double *)malloc(NODES3 * sizeof(double));
     img = (unsigned char *)malloc(sizeof(unsigned char)*((h.lin*h.col)+1)*h.ni);
-    imgVec = (double *)malloc(sizeof(double)*((h.lin*h.col)+1));
 
     i=0;
     while((n=fread(&img[i], sizeof(unsigned char), 1, fp)) == 1)
@@ -368,13 +364,13 @@ int train(void)
         c -> eta = LEARN*h.ni/(i+h.ni); /* atualização na learning rate */
 
         /* normalizacao dos valores de entrada */
-        normal(i, img, imgVec);
+        normal(c, i, img);
 
         /* FORWARD COMPUTATION */
-        fowardComputation(c, imgVec);
+        fowardComputation(c);
 
         /* BACKWARD COMPUTATION */
-        backwardComputation(c, imgVec);
+        backwardComputation(c);
     }
     printf("Rede construida!\n");
 
@@ -389,7 +385,6 @@ int train(void)
 
     fread(&htest, sizeof(header_t), 1, testep);
     entradateste = (unsigned char *)malloc(785 * sizeof(unsigned char));
-    vin = (double *)malloc(785 * sizeof(double));
     double erros = 0;
     printf("Teste da rede neural:\n");
     for(i=0; i<100; i++)
@@ -397,11 +392,11 @@ int train(void)
         if((n=fread(entradateste, sizeof(unsigned char), 785, testep)) == 785)
         {
             /* normalizacao dos valores de entrada */
-            normal(0, entradateste, vin);
+            normal(c, 0, entradateste);
 
             /* . . . . . . . . . . . . . . */
             /* FORWARD COMPUTATION */
-            fowardComputation(c, vin);
+            fowardComputation(c);
             
             /* Verificacao */            
             for(j = 0; j < NODES3; j++)
@@ -410,9 +405,9 @@ int train(void)
                 for(k = 0; k < NODES3; k++)
                 {   
                     if(k == j)
-                        sum[j] += pow((c -> y[3-1][k]-1),2) ;
+                        sum[j] += pow((c -> y[3][k] - 1),2) ;
                     else
-                        sum[j] += pow(c -> y[3-1][k],2) ;
+                        sum[j] += pow(c -> y[3][k],2) ;
                 }
             }
             
@@ -424,7 +419,7 @@ int train(void)
             /* 
             k = 0;
             for(j = 1; j < NODES3; j++)
-                if(c -> y[3-1][j] > c -> y[3-1][k])
+                if(c -> y[3][j] > c -> y[3][k])
                     k = j;
             */
            
@@ -442,7 +437,6 @@ int train(void)
     erros = (100.0 * erros)/i;
     printf("\nErro: %.2f%%", erros);
 
-    free(imgVec);
     free(img);
     free(sum);
     free(entradateste);
