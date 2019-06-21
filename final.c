@@ -79,7 +79,7 @@ struct sconfig normal (struct sconfig *c, int inicio, unsigned char in[]); /* no
 struct sconfig fowardComputation(struct sconfig *c); /* executa os calculos das matrizes para o sentido direto da rede */
 struct sconfig backwardComputation(struct sconfig *c); /* executa os calculos das matrizes para o sentido inverso da rede e atualiza suas matrizes */
 struct sconfig signalFlow(struct sconfig *c, int a, int nodesPrev, int nodes, double wmap[nodes][nodesPrev]); /* realiza os cálculos da fowardComputation para cada camada. fowardComputation apenas chama signnalFlow três vezes, uam vez para cada camada de perceptrons */
-struct sconfig backWeights(struct sconfig *c, int a, int nodesPrev, int nodes, double wmap[nodes][nodesPrev]); /* atualiza as matrizes de pesos baseado nos novos valores de delta */
+struct sconfig backWeights(struct sconfig *c, int a, int nodesPrev, int nodes); /* atualiza as matrizes de pesos baseado nos novos valores de delta */
 struct sconfig deltaBack(struct sconfig *c, int a, int nodesPrev, int nodes, double wmap[nodes][nodesPrev]); /* calcula os novos vetores delta baseado no erro calculado */
 int train(void); /* treina uma rede neural */
 void help(void); /* imprime ajuda */
@@ -233,14 +233,24 @@ struct sconfig signalFlow(struct sconfig *c, int a, int nodesPrev, int nodes, do
     return *c;
 }
 
-struct sconfig backWeights(struct sconfig *c, int a, int nodesPrev, int nodes, double wmap[nodes][nodesPrev])
+struct sconfig backWeights(struct sconfig *c, int a, int nodesPrev, int nodes)
 {
     int i, j;
-
+    double value;
+    
     for(i = 0; i < nodes; i++)
     {
         for(j = 0; j < nodesPrev; j++)
-            wmap[i][j] -= (c -> eta * c -> delta[a][i] * c -> y[a][j]);
+        {
+            value = (c -> eta * c -> delta[a][i] * c -> y[a][j]);
+
+            if(a == 2)
+                c -> wmap3[i][j] -= value;
+            else if(a == 1)
+                c -> wmap2[i][j] -= value;
+            else
+                c -> wmap1[i][j] -= value;            
+        }
 
         c -> bias[a][i] -= (c -> eta * c -> delta[a][i]);
     }
@@ -296,19 +306,21 @@ struct sconfig backwardComputation(struct sconfig *c)
     }
 
     /* atualização das matrizes */
-    /* delta e peso do terceiro layer */
+
+    /* delta do terceiro layer */
     for(j = 0; j < NODES3; j++)
         c -> delta[2][j] = (2)*erro[j] * d_activation(c -> v[2][j]);
         
-    backWeights(c, 2, NODES2, NODES3, c -> wmap3);
+    /* peso do terceiro layer */
+    backWeights(c, 2, NODES2, NODES3);
     
     /* delta e peso do segundo layer */
     deltaBack(c, 1, NODES2, NODES3, c -> wmap3);
-    backWeights(c, 1, NODES1, NODES2, c -> wmap2);
+    backWeights(c, 1, NODES1, NODES2);
 
     /* delta e peso do primeiro layer */
     deltaBack(c, 0, NODES1, NODES2, c -> wmap2);
-    backWeights(c, 0, 784, NODES1, c -> wmap1);
+    backWeights(c, 0, 784, NODES1);
 
     return *c;
 }
