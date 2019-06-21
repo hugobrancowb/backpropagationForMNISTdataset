@@ -84,7 +84,7 @@ struct sconfig deltaBack(struct sconfig *c, int a, int nodesPrev, int nodes, dou
 int train(void); /* treina uma rede neural */
 void help(void); /* imprime ajuda */
 
-int runtest(void);
+double runtest(int n);
 
 /* ---------------------------------------------------------------------- */
 /* types */
@@ -107,6 +107,7 @@ xxxx     unsigned byte   ??               label
 int main(int argc, char *argv[])
 {
     int opt; /* return from getopt() */
+    int n=0;
 
     IFDEBUG("Starting optarg loop...");
 
@@ -121,10 +122,28 @@ int main(int argc, char *argv[])
         switch(opt)
         {
             case 't':
-                train();
+                n = train();
+
+                while(n > 0)
+                {
+                    printf("Deseja testar a rede? Digite o tamanho da amostra ou digite '0' para sair: ");
+                    scanf("%d", &n);
+                    
+                    if(n)
+                        runtest(n);
+                }
+
                 break;
             case 'r':
-                runtest();
+                n=1;
+                while(n > 0)
+                {
+                    printf("Digite o tamanho da amostra ou digite '0' para sair: ");
+                    scanf("%d", &n);
+                    
+                    if(n)
+                        runtest(n);
+                }
                 break;
             case '?':
             default:
@@ -301,14 +320,10 @@ int train(void)
     /* declaracoes de variaveis locais */
     header_t h;
     config_t *c = (config_t *)malloc(sizeof(config_t));
-    int i, j, k, n;
-    double *sum;
+    int i, n;
     unsigned char *img;
-    unsigned char *entradateste;
-    header_t htest;
     FILE *fp;
     FILE *arquivomap;
-    FILE *testep;
 
     /* codigo */
     srand(time(NULL));
@@ -329,7 +344,6 @@ int train(void)
     printf("Lendo imagens %d x %d\n", h.lin, h.col);
 
     /* alocação de memória */
-    sum = (double *)malloc(NODES3 * sizeof(double));
     img = (unsigned char *)malloc(sizeof(unsigned char)*((h.lin*h.col)+1)*h.ni);
 
     i=0;
@@ -357,24 +371,113 @@ int train(void)
         /* BACKWARD COMPUTATION */
         backwardComputation(c);
     }
-    printf("Rede construida!\n");
+    printf("Rede construida!\n");    
 
-    /* . . . . . . . . . . . . . */
+    free(img);
+    printf(" \n");
+    /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
+    /* save the neural network as a binary file */
+    /* salvar o mapa gerado em dados binarios */
+    arquivomap = fopen("wmap", "wb");
+    if(arquivomap == NULL)
+    {
+        printf("Erro abrindo arquivo binario.\n");
+        exit(EXIT_FAILURE);
+    }
+    else
+    {
+        for(i = 0; i < NODES1; i++)
+            fwrite(&c -> wmap1[i], 784*sizeof(double), 1, arquivomap);
+
+        for(i = 0; i < NODES1; i++)
+            fwrite(&c-> bias[0], NODES1*sizeof(double), 1, arquivomap);
+
+        for(i = 0; i < NODES2; i++)
+            fwrite(&c -> wmap2[i], NODES1*sizeof(double), 1, arquivomap);
+        
+        for(i = 0; i < NODES2; i++)
+            fwrite(&c-> bias[1], NODES2*sizeof(double), 1, arquivomap);
+
+        for(i = 0; i < NODES3; i++)
+            fwrite(&c -> wmap3[i], NODES2*sizeof(double), 1, arquivomap);
+
+        for(i = 0; i < NODES3; i++)
+            fwrite(&c-> bias[2], NODES3*sizeof(double), 1, arquivomap);
+    }
+
+    free(c);
+    fclose(arquivomap); 
+
+    return 1;
+}
+
+double runtest(int n)
+{
+    int i, j, k, init, counter;
+    double *sum;
+    unsigned char *entradateste;
+    header_t h;
+    config_t *c = (config_t *)malloc(sizeof(config_t));
+    FILE *arquivomap;
+    FILE *testefile;
+
+    sum = (double *)malloc(NODES3 * sizeof(double));
+
+    srand(time(NULL));
+
+    /* abrir o mapa gerado */
+    arquivomap = fopen("wmap", "rb");
+    if(arquivomap == NULL)
+    {
+        printf("Erro abrindo arquivo binario.\n");
+        exit(EXIT_FAILURE);
+    }
+    else
+    {
+        for(i = 0; i < NODES1; i++)
+            fread(&c -> wmap1[i], 784*sizeof(double), 1, arquivomap);
+
+        for(i = 0; i < NODES1; i++)
+            fread(&c-> bias[0], NODES1*sizeof(double), 1, arquivomap);
+
+        for(i = 0; i < NODES2; i++)
+            fread(&c -> wmap2[i], NODES1*sizeof(double), 1, arquivomap);
+
+        for(i = 0; i < NODES2; i++)
+            fread(&c-> bias[1], NODES2*sizeof(double), 1, arquivomap);
+
+        for(i = 0; i < NODES3; i++)
+            fread(&c -> wmap3[i], NODES2*sizeof(double), 1, arquivomap);
+
+        for(i = 0; i < NODES3; i++)
+            fread(&c-> bias[2], NODES3*sizeof(double), 1, arquivomap);
+    }
+    
     /* teste da rede */
 
-    if((testep=fopen("test-4k-images-labels", "rb"))==NULL)
+    if((testefile=fopen("test-4k-images-labels", "rb"))==NULL)
     {
         printf("Nao consigo abrir arquivo %s\n", "test-4k-images-labels");
         exit(1);
     }
 
-    fread(&htest, sizeof(header_t), 1, testep);
+    fread(&h, sizeof(header_t), 1, testefile);
     entradateste = (unsigned char *)malloc(785 * sizeof(unsigned char));
     double erros = 0;
     printf("Teste da rede neural:\n");
-    for(i=0; i<100; i++)
+
+    init = rand()%4000 + 1;
+
+    while(init > 4000-n )
+        init = rand()%4000 + 1;
+
+    for(i=0; i < init; i++)
+        fread(entradateste, sizeof(unsigned char), 785, testefile);
+
+    counter = 1;
+    for(i=init; i < (init + n); i++)
     {
-        if((n=fread(entradateste, sizeof(unsigned char), 785, testep)) == 785)
+        if((n=fread(entradateste, sizeof(unsigned char), 785, testefile)) == 785)
         {
             /* normalizacao dos valores de entrada */
             normal(c, 0, entradateste);
@@ -408,54 +511,26 @@ int train(void)
                     k = j;
             */
            
-            printf("%.0lf - ", c -> y[0][784]);
-            printf("%d  ", k);
-            if(c -> y[0][784] == k)
-                printf("\n");
-            else
+            //printf("%.0lf - ", c -> y[0][784]);
+            //printf("%d  ", k);
+            if(c -> y[0][784] != k)
             {
-                printf("X\n");
+                printf("X ");
                 erros += 1;
-            }           
+            }
+            counter++;           
         }
     }
-    erros = (100.0 * erros)/(i+1);
-    printf("\nErro: %.2f%%", erros);
-
-    free(img);
-    free(sum);
-    free(entradateste);
-    fclose(testep);
-    printf(" \n");
-    /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
-    /* save the neural network as a binary file */
-    /* salvar o mapa gerado em dados binarios */
-    arquivomap = fopen("wmap", "wb");
-    if(arquivomap == NULL)
-    {
-        printf("Erro abrindo arquivo binario.\n");
-        exit(EXIT_FAILURE);
-    }
-    else
-    {
-        for(i = 0; i < NODES1; i++)
-            fwrite(&c -> wmap1[i], 784*sizeof(double), 1, arquivomap);
-
-        for(i = 0; i < NODES2; i++)
-            fwrite(&c -> wmap2[i], NODES1*sizeof(double), 1, arquivomap);
-
-        for(i = 0; i < NODES3; i++)
-            fwrite(&c -> wmap3[i], NODES2*sizeof(double), 1, arquivomap);
-    }
+    erros = (100.0 * erros)/counter;
+    printf("\nErro: %.2f%%\n\n", erros);
 
     free(c);
-    fclose(arquivomap); 
-}
+    free(sum);
+    free(entradateste);
+    fclose(arquivomap);
+    fclose(testefile);
 
-
-int runtest(void)
-{
-    printf("funcao nao implementada\n");
+    return 1.0;
 }
 
 /* ---------------------------------------------------------------------- */
