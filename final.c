@@ -200,34 +200,34 @@ struct sconfig fowardComputation(struct sconfig *c, double imgVec[785])
     int j, k;
 
     /* primeiro layer */
-        for(j = 0; j < NODES1; j++)
-        {
-            c -> v[1-1][j] = c -> bias[1-1][j];
-            for(k = 0; k < 784; k++)
-                c -> v[1-1][j] += c -> wmap1[j][k] * imgVec[k];
+    for(j = 0; j < NODES1; j++)
+    {
+        c -> v[1-1][j] = c -> bias[1-1][j];
+        for(k = 0; k < 784; k++)
+            c -> v[1-1][j] += c -> wmap1[j][k] * imgVec[k];
 
-            c -> y[1-1][j] = activation(c -> v[1-1][j]);
-        }
+        c -> y[1-1][j] = activation(c -> v[1-1][j]);
+    }
 
-        /* segundo layer */
-        for(j = 0; j < NODES2; j++)
-        {
-            c -> v[2-1][j] = c -> bias[2-1][j];
-            for(k = 0; k < NODES1; k++)
-                c -> v[2-1][j] += c -> wmap2[j][k] * c -> y[1-1][k];
+    /* segundo layer */
+    for(j = 0; j < NODES2; j++)
+    {
+        c -> v[2-1][j] = c -> bias[2-1][j];
+        for(k = 0; k < NODES1; k++)
+            c -> v[2-1][j] += c -> wmap2[j][k] * c -> y[1-1][k];
 
-            c -> y[2-1][j] = activation(c -> v[2-1][j]);
-        }
+        c -> y[2-1][j] = activation(c -> v[2-1][j]);
+    }
 
-        /* terceiro layer */
-        for(j = 0; j < NODES3; j++)
-        {
-            c -> v[3-1][j] = c -> bias[3-1][j];
-            for(k = 0; k < NODES2; k++)
-                c -> v[3-1][j] += c -> wmap3[j][k] * c -> y[2-1][k];
+    /* terceiro layer */
+    for(j = 0; j < NODES3; j++)
+    {
+        c -> v[3-1][j] = c -> bias[3-1][j];
+        for(k = 0; k < NODES2; k++)
+            c -> v[3-1][j] += c -> wmap3[j][k] * c -> y[2-1][k];
 
-            c -> y[3-1][j] = activation(c -> v[3-1][j]); /* a saida v3 eh o vetor resultado que nos diz o numero que a rede supoe que seja */
-        }
+        c -> y[3-1][j] = activation(c -> v[3-1][j]); /* a saida v3 eh o vetor resultado que nos diz o numero que a rede supoe que seja */
+    }
 
     return *c;
 }
