@@ -78,7 +78,8 @@ double * iniciarW(int a, int b, double mapa[a][b]); /* inicia as matrizes de wei
 struct sconfig normal (struct sconfig *c, int inicio, unsigned char in[]); /* normaliza n imagens de entrada */
 struct sconfig fowardComputation(struct sconfig *c); /* executa os calculos das matrizes para o sentido direto da rede */
 struct sconfig backwardComputation(struct sconfig *c); /* executa os calculos das matrizes para o sentido inverso da rede e atualiza suas matrizes */
-struct sconfig signalFlow(struct sconfig *c, int a, int nodesPrev, int nodes, double wmap[nodes][nodesPrev]);
+struct sconfig signalFlow(struct sconfig *c, int a, int nodesPrev, int nodes, double wmap[nodes][nodesPrev]); /* realiza os cálculos da fowardComputation para cada camada. fowardComputation apenas chama signnalFlow três vezes, uam vez para cada camada de perceptrons */
+struct sconfig backWeights(struct sconfig *c, int a, int nodesPrev, int nodes, double wmap[nodes][nodesPrev]); /* atualiza as matrizes de pesos baseado nos novos valores de delta */
 int train(void); /* treina uma rede neural */
 void help(void); /* imprime ajuda */
 
@@ -212,6 +213,21 @@ struct sconfig signalFlow(struct sconfig *c, int a, int nodesPrev, int nodes, do
     return *c;
 }
 
+struct sconfig backWeights(struct sconfig *c, int a, int nodesPrev, int nodes, double wmap[nodes][nodesPrev])
+{
+    int i, j;
+
+    for(i = 0; i < nodes; i++)
+    {
+        for(j = 0; j < nodesPrev; j++)
+            wmap[i][j] -= (c -> eta * c -> delta[a][i] * c -> y[a][j]);
+
+        c -> bias[a][i] -= (c -> eta * c -> delta[a][i]);
+    }
+
+    return *c;
+}
+
 struct sconfig fowardComputation(struct sconfig *c)
 {
     signalFlow(c, 0, 784, NODES1, c -> wmap1);
@@ -229,27 +245,24 @@ struct sconfig backwardComputation(struct sconfig *c)
     
     /* calculo do erro */
     for(j = 0; j < NODES3; j++)
-        saidaideal[j] = 0;
+    {
+        if(j == c -> y[0][784])
+            saidaideal[j] = 1; 
+        else
+            saidaideal[j] = 0; 
 
-    saidaideal[(int)c -> y[0][784]] = 1;
-    for(j = 0; j < NODES3; j++)
         erro[j] = c -> y[3][j] - saidaideal[j];
+    }
 
-    /* atualização das matrizes */    
+    /* atualização das matrizes */
     /* delta do terceiro layer */
     for(j = 0; j < NODES3; j++)
         c -> delta[3-1][j] = (2)*erro[j] * d_activation(c -> v[3-1][j]);
 
-    /* terceiro layer */
-    for(j = 0; j < NODES3; j++)
-    {
-        for(k = 0; k < NODES2; k++)
-        {
-            c -> wmap3[j][k] -= (c -> eta * c -> delta[3-1][j] * c -> y[2][k]);
-        }
-        c -> bias[3-1][j] -= (c -> eta * c -> delta[3-1][j]);
-    }
+    /* matriz de pesos do terceiro layer */
+    backWeights(c, 2, NODES2, NODES3, c -> wmap3);
 
+    /*........................*/
     /* delta do segundo layer */
     for(j = 0; j < NODES2; j++)
         c -> delta[2-1][j] = 0;
@@ -263,16 +276,10 @@ struct sconfig backwardComputation(struct sconfig *c)
     for(j = 0; j < NODES2; j++)
         c -> delta[2-1][j] = c -> delta[2-1][j] * d_activation(c -> v[2-1][j]);
 
-    /* segundo layer */
-    for(j = 0; j < NODES2; j++)
-    {
-        for(k = 0; k < NODES1; k++)
-            {
-                c -> wmap2[j][k] -= (c -> eta * c -> delta[2-1][j] * c -> y[1][k]);
-            }
-        c -> bias[2-1][j] -= (c -> eta * c -> delta[2-1][j]);
-    }
+    /* matriz de pesos do segundo layer */
+    backWeights(c, 1, NODES1, NODES2, c -> wmap2);
 
+    /*.........................*/
     /* delta do primeiro layer */
     for(j = 0; j < NODES1; j++)
         c -> delta[1-1][j] = 0;
@@ -286,15 +293,8 @@ struct sconfig backwardComputation(struct sconfig *c)
     for(j = 0; j < NODES1; j++)
         c -> delta[1-1][j] = c -> delta[1-1][j] * d_activation(c -> v[1-1][j]);
 
-    /* primeiro layer */
-    for(j = 0; j < NODES1; j++)
-    {
-        for(k = 0; k < 784; k++)
-        {
-            c -> wmap1[j][k] -= (c -> eta * c -> delta[1-1][j] * c -> y[0][k]);
-        }
-        c -> bias[1-1][j] -= (c -> eta * c -> delta[1-1][j]);
-    }
+    /* matriz de pesos do primeiro layer */
+    backWeights(c, 0, 784, NODES1, c -> wmap1);
 
     return *c;
 }
@@ -423,7 +423,7 @@ int train(void)
             }           
         }
     }
-    erros = (100.0 * erros)/i;
+    erros = (100.0 * erros)/(i+1);
     printf("\nErro: %.2f%%", erros);
 
     free(img);
