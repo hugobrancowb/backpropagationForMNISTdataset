@@ -371,7 +371,7 @@ int train(void)
     /* 'i': imagem atual -- numero total de imagens para treinar a rede */
     for(i = 0; i < h.ni; i++)
     {
-        c -> eta = LEARN*h.ni/(i+h.ni); /* atualização na learning rate */
+        c -> eta = LEARN*h.ni/(i+h.ni+1); /* atualização na learning rate */
 
         /* normalizacao dos valores de entrada */
         normal(c, i, img);
@@ -382,10 +382,9 @@ int train(void)
         /* BACKWARD COMPUTATION */
         backwardComputation(c);
     }
-    printf("Rede construida!\n");    
+    printf("Rede construida!\n\n");    
 
     free(img);
-    printf(" \n");
     /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
     /* save the neural network as a binary file */
     /* salvar o mapa gerado em dados binarios */
@@ -492,8 +491,7 @@ double runtest(int n)
         {
             /* normalizacao dos valores de entrada */
             normal(c, 0, entradateste);
-
-            /* . . . . . . . . . . . . . . */
+            
             /* FORWARD COMPUTATION */
             fowardComputation(c);
             
@@ -521,14 +519,10 @@ double runtest(int n)
                 if(c -> y[3][j] > c -> y[3][k])
                     k = j;
             */
-           
-            //printf("%.0lf - ", c -> y[0][784]);
-            //printf("%d  ", k);
+
             if(c -> y[0][784] != k)
-            {
-                printf("X ");
                 erros += 1;
-            }
+
             counter++;           
         }
     }
