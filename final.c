@@ -260,21 +260,20 @@ struct sconfig fowardComputation(struct sconfig *c)
 struct sconfig deltaBack(struct sconfig *c, int a, int nodesPrev, int nodes, double wmap[nodes][nodesPrev])
 {
     int i, j;
-
-    for(i = 0; i < NODES3; i++)
+    
+    for(i = 0; i < nodes; i++)
     {
-        for(j = 0; j < NODES2; j++)
+        for(j = 0; j < nodesPrev; j++)
         {
             if((j == 0) && (i == 0))
                 c -> delta[a][j] = c -> delta[a+1][j] * wmap[i][j];
             else
-                c -> delta[a][j] += c -> delta[a+1][j] * wmap[i][j];
-            
+                c -> delta[a][j] += c -> delta[a+1][j] * wmap[i][j];   
         }
-        
-        if(i == NODES3 - 1)
-            c -> delta[a][i] = c -> delta[a][i] * d_activation(c -> v[a][i]);
     }
+   
+    for(i = 0; i < nodes; i++)
+        c -> delta[a][i] = c -> delta[a][i] * d_activation(c -> v[a][i]);
 
     return *c;
 }
