@@ -75,7 +75,7 @@ double activation(double v); /* funcao de ativacao */
 double d_activation(double v); /* derivada da funcao de ativacao */
 struct sconfig iniciarMapas(struct sconfig *c, struct s_header h); /* inicia os mapas de pesos e bias */
 double * iniciarW(int a, int b, double mapa[a][b]); /* inicia as matrizes de weights baseado nas entradas */
-double * normal (int inicio, unsigned char in[], double out[]); /* normaliza n imagens de entrada */
+double * normal (int inicio, unsigned char in[], double out[785]); /* normaliza n imagens de entrada */
 int train(void); /* treina uma rede neural */
 void help(void); /* imprime ajuda */
 
