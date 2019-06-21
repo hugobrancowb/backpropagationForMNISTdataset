@@ -76,6 +76,7 @@ double d_activation(double v); /* derivada da funcao de ativacao */
 struct sconfig iniciarMapas(struct sconfig *c, struct s_header h); /* inicia os mapas de pesos e bias */
 double * iniciarW(int a, int b, double mapa[a][b]); /* inicia as matrizes de weights baseado nas entradas */
 double * normal (int inicio, unsigned char in[], double out[785]); /* normaliza n imagens de entrada */
+struct sconfig fowardComputation(struct sconfig *c, double imgVec[785]); /* executa os calculos das matrizes para o sentido direto da rede */
 int train(void); /* treina uma rede neural */
 void help(void); /* imprime ajuda */
 
@@ -156,11 +157,8 @@ double * iniciarW(int a, int b, double mapa[a][b])
 
     for(i = 0; i < a; i++)
         for(j = 0; j < b; j++)
-            {
                 mapa[i][j] = (rand()%100/100.0) - 0.5;
-            }
-    
-    printf("\n");
+
     return *mapa;
 }
 
@@ -194,6 +192,43 @@ double * normal (int inicio, unsigned char in[], double out[785])
         }    
 
     return out;
+}
+
+struct sconfig fowardComputation(struct sconfig *c, double imgVec[785])
+{
+    int j, k;
+
+    /* primeiro layer */
+        for(j = 0; j < NODES1; j++)
+        {
+            c -> v[1-1][j] = c -> bias[1-1][j];
+            for(k = 0; k < 784; k++)
+                c -> v[1-1][j] += c -> wmap1[j][k] * imgVec[k];
+
+            c -> y[1-1][j] = activation(c -> v[1-1][j]);
+        }
+
+        /* segundo layer */
+        for(j = 0; j < NODES2; j++)
+        {
+            c -> v[2-1][j] = c -> bias[2-1][j];
+            for(k = 0; k < NODES1; k++)
+                c -> v[2-1][j] += c -> wmap2[j][k] * c -> y[1-1][k];
+
+            c -> y[2-1][j] = activation(c -> v[2-1][j]);
+        }
+
+        /* terceiro layer */
+        for(j = 0; j < NODES3; j++)
+        {
+            c -> v[3-1][j] = c -> bias[3-1][j];
+            for(k = 0; k < NODES2; k++)
+                c -> v[3-1][j] += c -> wmap3[j][k] * c -> y[2-1][k];
+
+            c -> y[3-1][j] = activation(c -> v[3-1][j]); /* a saida v3 eh o vetor resultado que nos diz o numero que a rede supoe que seja */
+        }
+
+    return *c;
 }
 
 /* treina uma rede neural */
@@ -248,6 +283,7 @@ int train(void)
     /* inicializacao dos mapas de pesos e bias */
     iniciarMapas(c, h);    
 
+    printf("Construindo a rede neural...\n");
     /* 'i': imagem atual -- numero total de imagens para treinar a rede */
     for(i = 0; i < h.ni; i++)
     {
@@ -256,45 +292,10 @@ int train(void)
         /* normalizacao dos valores de entrada */
         normal(i, img, imgVec);
 
-        /* . . . . . . . . . . . . . . */
         /* FORWARD COMPUTATION */
-        //fowardComputation(c);
+        fowardComputation(c, imgVec);
 
-        /* primeiro layer */
-        for(j = 0; j < NODES1; j++)
-        {
-            c -> v[1-1][j] = c -> bias[1-1][j];
-            for(k = 0; k < 784; k++)
-                c -> v[1-1][j] += c -> wmap1[j][k] * imgVec[k];
-
-            c -> y[1-1][j] = activation(c -> v[1-1][j]);
-        }
-
-        /* segundo layer */
-        for(j = 0; j < NODES2; j++)
-        {
-            c -> v[2-1][j] = c -> bias[2-1][j];
-            for(k = 0; k < NODES1; k++)
-                c -> v[2-1][j] += c -> wmap2[j][k] * c -> y[1-1][k];
-
-            c -> y[2-1][j] = activation(c -> v[2-1][j]);
-        }
-
-        /* terceiro layer */
-        for(j = 0; j < NODES3; j++)
-        {
-            c -> v[3-1][j] = c -> bias[3-1][j];
-            for(k = 0; k < NODES2; k++)
-                c -> v[3-1][j] += c -> wmap3[j][k] * c -> y[2-1][k];
-
-            c -> y[3-1][j] = activation(c -> v[3-1][j]); /* a saida v3 eh o vetor resultado que nos diz o numero que a rede supoe que seja */
-            if(DEBUG) printf("%1.2lf ", c -> y[3-1][j]);
-        }
-        if(DEBUG) printf("\n");
-
-        /* . . . . . . . . . . . . . . */
         /* BACKWARD COMPUTATION */
-
         /* calculo do erro */
         for(j = 0; j < NODES3; j++)
             saidaideal[j] = 0;
@@ -363,8 +364,9 @@ int train(void)
                 c -> wmap1[j][k] -= (c -> eta * c -> delta[1-1][j] * imgVec[k]);
             }
             c -> bias[1-1][j] -= (c -> eta * c -> delta[1-1][j]);
-        }
+        }        
     }
+    printf("Rede construida!\n");
 
     /* . . . . . . . . . . . . . */
     /* teste da rede */
@@ -379,6 +381,7 @@ int train(void)
     entradateste = (unsigned char *)malloc(785 * sizeof(unsigned char));
     vin = (double *)malloc(785 * sizeof(double));
     erro[0] = 0;
+    printf("Teste da rede neural:\n");
     for(i=0; i<100; i++)
     {
         if((n=fread(entradateste, sizeof(unsigned char), 785, testep)) == 785)
@@ -388,36 +391,7 @@ int train(void)
 
             /* . . . . . . . . . . . . . . */
             /* FORWARD COMPUTATION */
-
-            /* primeiro layer */
-            for(j = 0; j < NODES1; j++)
-            {
-                c -> v[1-1][j] = c -> bias[1-1][j];
-                for(k = 0; k < 784; k++)
-                    c -> v[1-1][j] += c -> wmap1[j][k] * vin[k];
-
-                c -> y[1-1][j] = activation(c -> v[1-1][j]);
-            }
-
-            /* segundo layer */
-            for(j = 0; j < NODES2; j++)
-            {
-                c -> v[2-1][j] = c -> bias[2-1][j];
-                for(k = 0; k < NODES1; k++)
-                    c -> v[2-1][j] += c -> wmap2[j][k] * c -> y[1-1][k];
-
-                c -> y[2-1][j] = activation(c -> v[2-1][j]);
-            }
-
-            /* terceiro layer */
-            for(j = 0; j < NODES3; j++)
-            {
-                c -> v[3-1][j] = c -> bias[3-1][j];
-                for(k = 0; k < NODES2; k++)
-                    c -> v[3-1][j] += c -> wmap3[j][k] * c -> y[2-1][k];
-
-                c -> y[3-1][j] = activation(c -> v[3-1][j]);
-            }
+            fowardComputation(c, vin);
             
             /* Verificacao */            
             for(j = 0; j < NODES3; j++)
@@ -455,14 +429,14 @@ int train(void)
         }
     }
     erro[1] = (100.0 * erro[0])/i;
-    printf("\nErro: %.2f%%\n", erro[1]);
+    printf("\nErro: %.2f%%", erro[1]);
 
     free(imgVec);
     free(img);
     free(sum);
     free(entradateste);
     fclose(testep);
-    printf("\nErro: %.2f%%\n", erro[1]);
+    printf(" \n");
     /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
     /* save the neural network as a binary file */
     /* salvar o mapa gerado em dados binarios */
