@@ -82,7 +82,7 @@ struct sconfig signalFlow(struct sconfig *c, int a, int nodesPrev, int nodes, do
 struct sconfig backWeights(struct sconfig *c, int a, int nodesPrev, int nodes); /* atualiza as matrizes de pesos baseado nos novos valores de delta */
 struct sconfig deltaBack(struct sconfig *c, int a, int nodesPrev, int nodes, double wmap[nodes][nodesPrev]); /* calcula os novos vetores delta baseado no erro calculado */
 FILE mapaBias(struct sconfig *c, int opt, FILE *arquivo, int a, int size1, int size2, double mapa[size2][size1]); /* salva ou abre um arquivo contendo as matrizes de pesos e vetores bias */
-int train(void); /* treina uma rede neural */
+int train(double lr); /* treina uma rede neural */
 void help(void); /* imprime ajuda */
 
 double runtest(int n);
@@ -109,6 +109,7 @@ int main(int argc, char *argv[])
 {
     int opt; /* return from getopt() */
     int n=1;
+    double lr, erro;
 
     IFDEBUG("Starting optarg loop...");
 
@@ -119,11 +120,11 @@ int main(int argc, char *argv[])
      */
 
     opterr = 0;
-    while((opt = getopt(argc, argv, "trh")) != EOF)
+    while((opt = getopt(argc, argv, "trgh")) != EOF)
         switch(opt)
         {
             case 't':
-                n = train();
+                n = train(LEARN);
 
                 while(n > 0)
                 {
@@ -357,7 +358,7 @@ struct sconfig backwardComputation(struct sconfig *c)
 }
 
 /* treina uma rede neural */
-int train(void) 
+int train(double lr) 
 {
     /* declaracoes de variaveis locais */
     header_t h;
@@ -378,12 +379,12 @@ int train(void)
 
     fread(&h, sizeof(header_t), 1, fp);
 
-    printf("Teste de leitura:\n");
+    /* printf("Teste de leitura:\n");
     printf("Num. magico: %d\n", h.magic);
     printf("Num. imagens: %d\n", h.ni);
     printf("Num. linhas por imagem: %d\n", h.lin);
     printf("Num. colunas por imagem: %d\n", h.col);
-    printf("Lendo imagens %d x %d\n", h.lin, h.col);
+    printf("Lendo imagens %d x %d\n", h.lin, h.col); */
 
     /* alocação de memória */
     img = (unsigned char *)malloc(sizeof(unsigned char)*((h.lin*h.col)+1)*h.ni);
@@ -393,16 +394,17 @@ int train(void)
         i++;
     fclose(fp);
         
-    printf("\n");
+    /* printf("\n"); */
 
     /* inicializacao dos mapas de pesos e bias */
-    iniciarMapas(c);    
+    iniciarMapas(c);
+    c -> eta = lr;    
 
     printf("Construindo a rede neural...\n");
     /* 'i': imagem atual -- numero total de imagens para treinar a rede */
     for(i = 0; i < h.ni; i++)
     {
-        c -> eta = LEARN*h.ni/(i+h.ni+1); /* atualização na learning rate */
+        /* c -> eta = LEARN*h.ni/(i+h.ni+1); */ /* atualização na learning rate */
 
         /* normalizacao dos valores de entrada */
         normal(c, i, img);
@@ -413,7 +415,7 @@ int train(void)
         /* BACKWARD COMPUTATION */
         backwardComputation(c);
     }
-    printf("Rede construida!\n\n");    
+    printf("Rede construida!\n");    
 
     free(img);
     /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
