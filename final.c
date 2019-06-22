@@ -223,15 +223,15 @@ struct sconfig iniciarMapas(struct sconfig *c, struct s_header h)
 
 struct sconfig normal (struct sconfig *c, int inicio, unsigned char in[])
 {
-    int i, j;
-    for(i = inicio; i < inicio+1; i++)
-        for(j = 0; j <= 784; j++)
-        {
-            if(j == 784)
-                c -> y[0][j] = in[i*785 + j]*1.0;
-            else
-                c -> y[0][j] = ((in[i*785 + j]*1.0)/255);
-        }    
+    int j;
+
+    for(j = 0; j <= 784; j++)
+    {
+        if(j != 784)
+            c -> y[0][j] = ((in[inicio*785 + j]*1.0)/255);
+        else
+            c -> y[0][j] = in[inicio*785 + j]*1.0;
+    }    
 
     return *c;
 }
