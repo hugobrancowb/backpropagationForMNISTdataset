@@ -107,7 +107,8 @@ xxxx     unsigned byte   ??               label
 int main(int argc, char *argv[])
 {
     int opt; /* return from getopt() */
-    int n=0;
+    int n=1;
+    double erro;
 
     IFDEBUG("Starting optarg loop...");
 
@@ -135,14 +136,16 @@ int main(int argc, char *argv[])
 
                 break;
             case 'r':
-                n=1;
                 while(n > 0)
                 {
                     printf("Digite o tamanho da amostra ou digite '0' para sair: ");
                     scanf("%d", &n);
                     
                     if(n)
-                        runtest(n);
+                    {
+                        erro = runtest(n);
+                        printf("Erro: %.2f%%\n\n", erro);
+                    }
                 }
                 break;
             case '?':
@@ -462,8 +465,6 @@ double runtest(int n)
         for(i = 0; i < NODES3; i++)
             fread(&c-> bias[2], NODES3*sizeof(double), 1, arquivomap);
     }
-    
-    /* teste da rede */
 
     if((testefile=fopen("test-4k-images-labels", "rb"))==NULL)
     {
@@ -474,7 +475,6 @@ double runtest(int n)
     fread(&h, sizeof(header_t), 1, testefile);
     entradateste = (unsigned char *)malloc(785 * sizeof(unsigned char));
     double erros = 0;
-    printf("Teste da rede neural:\n");
 
     init = rand()%4000 + 1;
 
@@ -527,7 +527,6 @@ double runtest(int n)
         }
     }
     erros = (100.0 * erros)/counter;
-    printf("\nErro: %.2f%%\n\n", erros);
 
     free(c);
     free(sum);
@@ -535,7 +534,7 @@ double runtest(int n)
     fclose(arquivomap);
     fclose(testefile);
 
-    return 1.0;
+    return erros;
 }
 
 /* ---------------------------------------------------------------------- */
