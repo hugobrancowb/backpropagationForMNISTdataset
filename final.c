@@ -81,6 +81,7 @@ struct sconfig backwardComputation(struct sconfig *c); /* executa os calculos da
 struct sconfig signalFlow(struct sconfig *c, int a, int nodesPrev, int nodes, double wmap[nodes][nodesPrev]); /* realiza os cálculos da fowardComputation para cada camada. fowardComputation apenas chama signnalFlow três vezes, uam vez para cada camada de perceptrons */
 struct sconfig backWeights(struct sconfig *c, int a, int nodesPrev, int nodes); /* atualiza as matrizes de pesos baseado nos novos valores de delta */
 struct sconfig deltaBack(struct sconfig *c, int a, int nodesPrev, int nodes, double wmap[nodes][nodesPrev]); /* calcula os novos vetores delta baseado no erro calculado */
+FILE mapaBias(struct sconfig *c, int opt, FILE *arquivo, int a, int size1, int size2, double mapa[size2][size1]); /* salva ou abre um arquivo contendo as matrizes de pesos e vetores bias */
 int train(void); /* treina uma rede neural */
 void help(void); /* imprime ajuda */
 
@@ -426,29 +427,43 @@ int train(void)
     }
     else
     {
-        for(i = 0; i < NODES1; i++)
-            fwrite(&c -> wmap1[i], 784*sizeof(double), 1, arquivomap);
-
-        for(i = 0; i < NODES1; i++)
-            fwrite(&c-> bias[0][i], sizeof(double), 1, arquivomap);
-
-        for(i = 0; i < NODES2; i++)
-            fwrite(&c -> wmap2[i], NODES1*sizeof(double), 1, arquivomap);
-        
-        for(i = 0; i < NODES2; i++)
-            fwrite(&c-> bias[1][i], sizeof(double), 1, arquivomap);
-
-        for(i = 0; i < NODES3; i++)
-            fwrite(&c -> wmap3[i], NODES2*sizeof(double), 1, arquivomap);
-
-        for(i = 0; i < NODES3; i++)
-            fwrite(&c-> bias[2][i], sizeof(double), 1, arquivomap);
+        mapaBias(c, 1, arquivomap, 0, 784, NODES1, c -> wmap1);
+        mapaBias(c, 1, arquivomap, 1, NODES1, NODES2, c -> wmap2);
+        mapaBias(c, 1, arquivomap, 2, NODES2, NODES3, c -> wmap3);
     }
 
     free(c);
     fclose(arquivomap); 
 
     return 1;
+}
+
+FILE mapaBias(struct sconfig *c, int opt, FILE *arquivo, int a, int size1, int size2, double mapa[size2][size1])
+{
+    /* opt = 1: salva arquivo */
+    /* opt = 2: abre arquivo */
+
+    int i;
+
+    if(opt)
+    {
+        for(i = 0; i < size2; i++)
+            fwrite(&mapa[i], size1*sizeof(double), 1, arquivo);
+
+        for(i = 0; i < size2; i++)
+            fwrite(&c-> bias[a][i], sizeof(double), 1, arquivo);
+    }
+    else
+    {
+        
+        for(i = 0; i < size2; i++)
+            fread(&mapa[i], size1*sizeof(double), 1, arquivo);
+
+        for(i = 0; i < size2; i++)
+            fread(&c-> bias[a][i], sizeof(double), 1, arquivo);
+    }    
+    
+    return *arquivo;
 }
 
 double runtest(int n)
@@ -474,23 +489,9 @@ double runtest(int n)
     }
     else
     {
-        for(i = 0; i < NODES1; i++)
-            fread(&c -> wmap1[i], 784*sizeof(double), 1, arquivomap);
-
-        for(i = 0; i < NODES1; i++)
-            fread(&c-> bias[0][i], sizeof(double), 1, arquivomap);
-
-        for(i = 0; i < NODES2; i++)
-            fread(&c -> wmap2[i], NODES1*sizeof(double), 1, arquivomap);
-
-        for(i = 0; i < NODES2; i++)
-            fread(&c-> bias[1][i], sizeof(double), 1, arquivomap);
-
-        for(i = 0; i < NODES3; i++)
-            fread(&c -> wmap3[i], NODES2*sizeof(double), 1, arquivomap);
-
-        for(i = 0; i < NODES3; i++)
-            fread(&c-> bias[2][i], sizeof(double), 1, arquivomap);
+        mapaBias(c, 0, arquivomap, 0, 784, NODES1, c -> wmap1);
+        mapaBias(c, 0, arquivomap, 1, NODES1, NODES2, c -> wmap2);
+        mapaBias(c, 0, arquivomap, 2, NODES2, NODES3, c -> wmap3);
     }
 
     if((testefile=fopen("test-4k-images-labels", "rb"))==NULL)
