@@ -263,12 +263,23 @@ struct sconfig backWeights(struct sconfig *c, int a, int nodesPrev, int nodes)
         {
             value = (c -> eta * c -> delta[a][i] * c -> y[a][j]);
 
-            if(a == 2)
-                c -> wmap3[i][j] -= value;
-            else if(a == 1)
-                c -> wmap2[i][j] -= value;
-            else
-                c -> wmap1[i][j] -= value;            
+            switch (a)
+            {
+                case 2:
+                    c -> wmap3[i][j] -= value;
+                    break;
+                case 1:
+                    c -> wmap2[i][j] -= value;
+                    break;
+                case 0:
+                    c -> wmap1[i][j] -= value;
+                    break;
+                
+                default:
+                    printf("Ocorreu um erro inesperado.\n");
+                    exit(EXIT_FAILURE);
+                    break;
+            }         
         }
 
         c -> bias[a][i] -= (c -> eta * c -> delta[a][i]);
