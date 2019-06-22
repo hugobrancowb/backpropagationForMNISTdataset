@@ -190,7 +190,7 @@ double * iniciarW(int a, int b, double mapa[a][b])
 
 struct sconfig iniciarMapas(struct sconfig *c, struct s_header h)
 {
-    int i, j;
+    int i, j, limite;
 
     /* Weights */
     iniciarW((int)NODES1, (int)h.lin*h.col, c -> wmap1);    
@@ -199,8 +199,28 @@ struct sconfig iniciarMapas(struct sconfig *c, struct s_header h)
     
     /* Bias */
     for(j = 0; j < 3; j++)
-        for(i = 0; i < NODES1; i++)
+    {
+        switch (j)
+        {
+            case 0:
+                limite = 784;
+                break;
+            case 1:
+                limite = NODES1;
+                break;
+            case 2:
+                limite = NODES2;
+                break;
+            
+            default:
+                printf("Ocorreu um erro inesperado.\n");
+                exit(EXIT_FAILURE);
+                break;
+        }
+
+        for(i = 0; i < limite; i++)
             c -> bias[j][i] = (rand()%100/100.0) - 0.5;
+    }
     
     return *c;
 }
