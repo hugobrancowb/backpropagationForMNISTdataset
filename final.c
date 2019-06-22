@@ -430,19 +430,19 @@ int train(void)
             fwrite(&c -> wmap1[i], 784*sizeof(double), 1, arquivomap);
 
         for(i = 0; i < NODES1; i++)
-            fwrite(&c-> bias[0], NODES1*sizeof(double), 1, arquivomap);
+            fwrite(&c-> bias[0][i], sizeof(double), 1, arquivomap);
 
         for(i = 0; i < NODES2; i++)
             fwrite(&c -> wmap2[i], NODES1*sizeof(double), 1, arquivomap);
         
         for(i = 0; i < NODES2; i++)
-            fwrite(&c-> bias[1], NODES2*sizeof(double), 1, arquivomap);
+            fwrite(&c-> bias[1][i], sizeof(double), 1, arquivomap);
 
         for(i = 0; i < NODES3; i++)
             fwrite(&c -> wmap3[i], NODES2*sizeof(double), 1, arquivomap);
 
         for(i = 0; i < NODES3; i++)
-            fwrite(&c-> bias[2], NODES3*sizeof(double), 1, arquivomap);
+            fwrite(&c-> bias[2][i], sizeof(double), 1, arquivomap);
     }
 
     free(c);
@@ -478,19 +478,19 @@ double runtest(int n)
             fread(&c -> wmap1[i], 784*sizeof(double), 1, arquivomap);
 
         for(i = 0; i < NODES1; i++)
-            fread(&c-> bias[0], NODES1*sizeof(double), 1, arquivomap);
+            fread(&c-> bias[0][i], sizeof(double), 1, arquivomap);
 
         for(i = 0; i < NODES2; i++)
             fread(&c -> wmap2[i], NODES1*sizeof(double), 1, arquivomap);
 
         for(i = 0; i < NODES2; i++)
-            fread(&c-> bias[1], NODES2*sizeof(double), 1, arquivomap);
+            fread(&c-> bias[1][i], sizeof(double), 1, arquivomap);
 
         for(i = 0; i < NODES3; i++)
             fread(&c -> wmap3[i], NODES2*sizeof(double), 1, arquivomap);
 
         for(i = 0; i < NODES3; i++)
-            fread(&c-> bias[2], NODES3*sizeof(double), 1, arquivomap);
+            fread(&c-> bias[2][i], sizeof(double), 1, arquivomap);
     }
 
     if((testefile=fopen("test-4k-images-labels", "rb"))==NULL)
