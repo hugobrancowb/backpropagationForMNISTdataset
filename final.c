@@ -108,7 +108,6 @@ int main(int argc, char *argv[])
 {
     int opt; /* return from getopt() */
     int n=1;
-    double erro;
 
     IFDEBUG("Starting optarg loop...");
 
@@ -142,10 +141,7 @@ int main(int argc, char *argv[])
                     scanf("%d", &n);
                     
                     if(n)
-                    {
-                        erro = runtest(n);
-                        printf("Erro: %.2f%%\n\n", erro);
-                    }
+                        runtest(n);
                 }
                 break;
             case '?':
@@ -193,7 +189,7 @@ struct sconfig iniciarMapas(struct sconfig *c, struct s_header h)
     int i, j, limite;
 
     /* Weights */
-    iniciarW((int)NODES1, (int)h.lin*h.col, c -> wmap1);    
+    iniciarW((int)NODES1, 784, c -> wmap1);    
     iniciarW((int)NODES2, (int)NODES1, c -> wmap2);    
     iniciarW((int)NODES3, (int)NODES2, c -> wmap3);
     
@@ -203,13 +199,13 @@ struct sconfig iniciarMapas(struct sconfig *c, struct s_header h)
         switch (j)
         {
             case 0:
-                limite = 784;
-                break;
-            case 1:
                 limite = NODES1;
                 break;
-            case 2:
+            case 1:
                 limite = NODES2;
+                break;
+            case 2:
+                limite = NODES3;
                 break;
             
             default:
@@ -547,6 +543,7 @@ double runtest(int n)
         }
     }
     erros = (100.0 * erros)/counter;
+    printf("Erro: %.2f%%\n\n", erros);
 
     free(c);
     free(sum);
