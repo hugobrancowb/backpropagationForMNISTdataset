@@ -1,4 +1,4 @@
-/* vamos ler 6000 imagens */
+/* vamos ler 6000 imagens e testar com até 4000 */
 /* hexdump */
 
 #include <stdio.h>
@@ -40,7 +40,7 @@
 #define NODES2 100
 #define NODES3 10
 #define PIXELS 28
-#define LEARN 0.1
+#define LEARN 0.06
 #define N_IMAGENS 6000
 
 typedef struct s_header
@@ -338,7 +338,6 @@ struct sconfig backwardComputation(struct sconfig *c)
     }
 
     /* atualização das matrizes */
-
     /* delta do terceiro layer */
     for(j = 0; j < NODES3; j++)
         c -> delta[2][j] = (2)*erro[j] * d_activation(c -> v[2][j]);
@@ -379,13 +378,6 @@ int train(double lr)
 
     fread(&h, sizeof(header_t), 1, fp);
 
-    /* printf("Teste de leitura:\n");
-    printf("Num. magico: %d\n", h.magic);
-    printf("Num. imagens: %d\n", h.ni);
-    printf("Num. linhas por imagem: %d\n", h.lin);
-    printf("Num. colunas por imagem: %d\n", h.col);
-    printf("Lendo imagens %d x %d\n", h.lin, h.col); */
-
     /* alocação de memória */
     img = (unsigned char *)malloc(sizeof(unsigned char)*((h.lin*h.col)+1)*h.ni);
 
@@ -393,8 +385,6 @@ int train(double lr)
     while((n=fread(&img[i], sizeof(unsigned char), 1, fp)) == 1)
         i++;
     fclose(fp);
-        
-    /* printf("\n"); */
 
     /* inicializacao dos mapas de pesos e bias */
     iniciarMapas(c);
@@ -404,8 +394,6 @@ int train(double lr)
     /* 'i': imagem atual -- numero total de imagens para treinar a rede */
     for(i = 0; i < h.ni; i++)
     {
-        /* c -> eta = LEARN*h.ni/(i+h.ni+1); */ /* atualização na learning rate */
-
         /* normalizacao dos valores de entrada */
         normal(c, i, img);
 
@@ -418,9 +406,8 @@ int train(double lr)
     printf("Rede construida!\n");    
 
     free(img);
-    /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
+    
     /* save the neural network as a binary file */
-    /* salvar o mapa gerado em dados binarios */
     arquivomap = fopen("wmap", "wb");
     if(arquivomap == NULL)
     {
@@ -468,9 +455,9 @@ FILE mapaBias(struct sconfig *c, int opt, FILE *arquivo, int a, int size1, int s
     return *arquivo;
 }
 
-double runtest(int n)
+double runtest(int in)
 {
-    int i, j, k, init, counter;
+    int i, j, k, n, init, counter;
     double *sum;
     unsigned char *entradateste;
     header_t h;
@@ -508,14 +495,14 @@ double runtest(int n)
 
     init = rand()%4000 + 1;
 
-    while(init > 4000-n )
+    while(init > 4000-in )
         init = rand()%4000 + 1;
 
     for(i=0; i < init; i++)
         fread(entradateste, sizeof(unsigned char), 785, testefile);
 
     counter = 1;
-    for(i=init; i < (init + n); i++)
+    for(i=init; i < (init + in); i++)
     {
         if((n=fread(entradateste, sizeof(unsigned char), 785, testefile)) == 785)
         {
