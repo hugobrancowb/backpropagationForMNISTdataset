@@ -305,15 +305,15 @@ struct sconfig deltaBack(struct sconfig *c, int a, int nodesPrev, int nodes, dou
     {
         for(j = 0; j < nodesPrev; j++)
         {
-            if((j == 0) && (i == 0))
-                c -> delta[a][j] = c -> delta[a+1][j] * wmap[i][j];
+            if(i == 0)
+                c -> delta[a][j] = c -> delta[a+1][i] * wmap[i][j];
             else
-                c -> delta[a][j] += c -> delta[a+1][j] * wmap[i][j];   
+                c -> delta[a][j] += c -> delta[a+1][i] * wmap[i][j];   
+            
+            if(i == nodes - 1)
+                c -> delta[a][j] = c -> delta[a][j] * d_activation(c -> v[a][j]);
         }
     }
-   
-    for(i = 0; i < nodes; i++)
-        c -> delta[a][i] = c -> delta[a][i] * d_activation(c -> v[a][i]);
 
     return *c;
 }
