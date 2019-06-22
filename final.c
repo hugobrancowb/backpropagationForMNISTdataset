@@ -73,7 +73,7 @@ void copyr(void); /* print version and copyright information */
 
 double activation(double v); /* funcao de ativacao */
 double d_activation(double v); /* derivada da funcao de ativacao */
-struct sconfig iniciarMapas(struct sconfig *c, struct s_header h); /* inicia os mapas de pesos e bias */
+struct sconfig iniciarMapas(struct sconfig *c); /* inicia os mapas de pesos e bias */
 double * iniciarW(int a, int b, double mapa[a][b]); /* inicia as matrizes de weights baseado nas entradas */
 struct sconfig normal (struct sconfig *c, int inicio, unsigned char in[]); /* normaliza n imagens de entrada */
 struct sconfig fowardComputation(struct sconfig *c); /* executa os calculos das matrizes para o sentido direto da rede */
@@ -185,7 +185,7 @@ double * iniciarW(int a, int b, double mapa[a][b])
     return *mapa;
 }
 
-struct sconfig iniciarMapas(struct sconfig *c, struct s_header h)
+struct sconfig iniciarMapas(struct sconfig *c)
 {
     int i, j, limite;
 
@@ -396,7 +396,7 @@ int train(void)
     printf("\n");
 
     /* inicializacao dos mapas de pesos e bias */
-    iniciarMapas(c, h);    
+    iniciarMapas(c);    
 
     printf("Construindo a rede neural...\n");
     /* 'i': imagem atual -- numero total de imagens para treinar a rede */
