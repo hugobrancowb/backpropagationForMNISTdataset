@@ -54,4 +54,6 @@ dkms.conf
 
 # Outros
 wmap
-
+build.sh
+*.pdf
+makefile
