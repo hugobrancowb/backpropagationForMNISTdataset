@@ -23,7 +23,7 @@ Now we use the whole dataset for training and testing the neural network. First 
 
 ```Matlab
 trainset = trainDB(60000);
- testset = testDB (10000);
+testset  = testDB (10000);
 ```
 
 ### Train and Test
