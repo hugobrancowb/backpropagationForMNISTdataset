@@ -1,6 +1,8 @@
 # Neural Network using Backpropagation to classify images into 1 out of 10 categories
 Backpropagation algorithm written in C to train and classify handwritten numbers (0-9) from [MNIST](http://yann.lecun.com/exdb/mnist/) dataset.
 
+Mais informações sobre o projeto encontram-se no [meu portfólio](https://hugobrancowb.github.io/).
+
 ![Sample image from dataset.](sample.png)
 
 ## C Version
@@ -35,3 +37,6 @@ testset  = testDB (10000);
 % now the neural network is tested and returns 'p' as the precision percentage
 p = testNN(W1,W2,W3,B1,B2,B3,testset);
 ```
+
+## Keywords
+Matlab, C, Inteligência Artificial, Artificial Intelligence, MNIST, Classification
